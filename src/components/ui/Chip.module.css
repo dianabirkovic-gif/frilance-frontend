@@ -1,0 +1,22 @@
+.chip {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+  flex-shrink: 0;
+}
+
+.ready {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.draft {
+  background: var(--ink-700);
+  color: var(--text-2);
+}
+
+.review {
+  background: var(--gold-50);
+  color: var(--gold-500);
+}

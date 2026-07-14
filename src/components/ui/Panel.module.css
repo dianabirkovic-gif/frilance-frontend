@@ -1,0 +1,21 @@
+.panel {
+  background: var(--ink-900);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 18px;
+}
+
+:global(body.light-theme) .panel {
+  box-shadow: var(--sh-sm);
+}
+
+@media (min-width: 900px) {
+  .panel {
+    padding: 22px 24px;
+  }
+}
+
+.flush {
+  padding: 0;
+  overflow: hidden;
+}

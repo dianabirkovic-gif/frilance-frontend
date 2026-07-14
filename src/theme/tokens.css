@@ -1,0 +1,153 @@
+/* ══════════════════════════════════════════════
+   Design tokens ported 1:1 from design-tokens.json
+   (base + dark + light sets). Variable names match
+   the ones used in the original dashboard.html
+   prototype on purpose — do not rename them; add to
+   this file instead of inventing parallel ad hoc
+   custom properties in component CSS. See
+   frontend CLAUDE.md "Design tokens" section.
+══════════════════════════════════════════════ */
+:root {
+  /* base.spacing */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+
+  /* base.radius */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+
+  /* base.typography.font */
+  --f-display:
+    "General Sans",
+    "Public Sans",
+    sans-serif;
+  --f-body: "Public Sans", sans-serif;
+  --f-mono: "IBM Plex Mono", monospace;
+
+  /* base.motion */
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-enter: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-theme-switch: 220ms;
+  --dur-slow: 360ms;
+
+  /* base.breakpoint */
+  --bp-mobile-max: 899px;
+  --bp-desktop-min: 900px;
+
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
+/* ── dark theme (default) — base.color.dark ── */
+body {
+  --ink-950: #121410;
+  --ink-900: #181b15;
+  --ink-800: #1f231c;
+  --ink-700: #272b22;
+  --ink-600: #343a2d;
+
+  --line: rgba(243, 241, 234, 0.08);
+  --line-strong: rgba(243, 241, 234, 0.16);
+
+  --text-1: #f3f1ea;
+  --text-2: #b9bbaf;
+  --text-3: #7c8074;
+  --on-brand: #0e1710;
+
+  --brand-50: rgba(76, 122, 90, 0.1);
+  --brand-100: rgba(76, 122, 90, 0.18);
+  --brand-400: #6fa37e;
+  --brand-500: #4c7a5a;
+  --brand-600: #3e6549;
+
+  --gold-50: rgba(217, 164, 65, 0.1);
+  --gold-100: rgba(217, 164, 65, 0.18);
+  --gold-500: #d9a441;
+  --gold-600: #b98a2e;
+
+  --success: #5c8f6b;
+  --success-bg: rgba(92, 143, 107, 0.14);
+  --warning: #d9a441;
+  --warning-bg: rgba(217, 164, 65, 0.14);
+  --danger: #c1543f;
+  --danger-bg: rgba(193, 84, 63, 0.14);
+  --info: #6e8fa3;
+  --info-bg: rgba(110, 143, 163, 0.14);
+
+  --chart-fill-0: rgba(76, 122, 90, 0.35);
+  --chart-fill-1: rgba(76, 122, 90, 0);
+
+  --overlay-bg: rgba(18, 20, 16, 0.9);
+  --tabbar-bg: rgba(24, 27, 21, 0.92);
+
+  --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.24);
+  --sh-md: 0 4px 16px rgba(0, 0, 0, 0.28);
+  --sh-lg: 0 12px 40px rgba(0, 0, 0, 0.36);
+  --sh-fab: 0 6px 18px rgba(76, 122, 90, 0.35);
+
+  --ambient-1: rgba(76, 122, 90, 0.1);
+  --ambient-2: rgba(217, 164, 65, 0.05);
+
+  transition: background var(--dur-theme-switch) ease;
+}
+
+/* ── light theme — base.color.light, toggled via body.light-theme ── */
+body.light-theme {
+  --ink-950: #f7f5f0;
+  --ink-900: #ffffff;
+  --ink-800: #ffffff;
+  --ink-700: #efebe3;
+  --ink-600: #e3ddd1;
+
+  --line: rgba(23, 20, 15, 0.09);
+  --line-strong: rgba(23, 20, 15, 0.16);
+
+  --text-1: #17140f;
+  --text-2: #5c5850;
+  --text-3: #948e82;
+  --on-brand: #ffffff;
+
+  --brand-50: rgba(62, 101, 73, 0.08);
+  --brand-100: rgba(62, 101, 73, 0.14);
+  --brand-400: #4c7a5a;
+  --brand-500: #3e6549;
+  --brand-600: #2e4d38;
+
+  --gold-50: rgba(185, 138, 46, 0.1);
+  --gold-100: rgba(185, 138, 46, 0.16);
+  --gold-500: #b98a2e;
+  --gold-600: #96701f;
+
+  --success: #3e6549;
+  --success-bg: rgba(62, 101, 73, 0.1);
+  --warning: #b98a2e;
+  --warning-bg: rgba(185, 138, 46, 0.12);
+  --danger: #a8432f;
+  --danger-bg: rgba(168, 67, 47, 0.09);
+  --info: #4c6e82;
+  --info-bg: rgba(76, 110, 130, 0.1);
+
+  --chart-fill-0: rgba(62, 101, 73, 0.18);
+  --chart-fill-1: rgba(62, 101, 73, 0);
+
+  --overlay-bg: rgba(247, 245, 240, 0.88);
+  --tabbar-bg: rgba(255, 255, 255, 0.92);
+
+  --sh-sm: 0 1px 2px rgba(23, 20, 15, 0.06);
+  --sh-md: 0 4px 16px rgba(23, 20, 15, 0.08);
+  --sh-lg: 0 12px 32px rgba(23, 20, 15, 0.1);
+  --sh-fab: 0 6px 18px rgba(62, 101, 73, 0.22);
+
+  --ambient-1: rgba(62, 101, 73, 0.06);
+  --ambient-2: rgba(185, 138, 46, 0.05);
+}

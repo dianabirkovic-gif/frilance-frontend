@@ -1,0 +1,31 @@
+.desktopShell {
+  display: grid;
+  grid-template-columns: 248px 1fr;
+  min-height: 100vh;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.content {
+  padding: 28px 32px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.mobileShell {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+.mobileContent {
+  padding: 16px 18px calc(96px + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
