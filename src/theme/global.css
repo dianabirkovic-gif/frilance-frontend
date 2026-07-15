@@ -54,6 +54,16 @@ button {
   color: #fff;
 }
 
+/* Horizontal-scroll strips (AttentionList mobile, etc.) scroll by touch/drag,
+   not via a visible scrollbar — matches the design reference's global rule. */
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  scrollbar-width: none;
+}
+
 #root {
   position: relative;
   z-index: 1;

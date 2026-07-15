@@ -9,7 +9,7 @@ dashboard.html — kept in the design-reference repo), talking to
 
 Implemented: login (FR-01) and the Overview dashboard screen, end to end
 against the real backend API. Every other sidebar/tab-bar nav item
-(`components/shell/navItems.ts`) is a disabled placeholder with no route —
+(`config/navItems/navItems.ts`) is a disabled placeholder with no route —
 do not wire a nav item to a route until the page behind it actually exists.
 
 ## Design tokens — never hardcode a color, spacing value, or font
@@ -27,8 +27,11 @@ around them does.
   structure) rather than inlining a hex code or px value in a component
   file — a hardcoded color in component CSS cannot be re-themed and is a
   review-blocking issue here, not a style nit.
-- Dark is the default; light is applied via `body.light-theme`, toggled by
-  `ThemeProvider`/`useTheme` (`theme/ThemeProvider.tsx`). Never branch in
+- Light is the default; it's applied via `body.light-theme`, toggled by
+  `ThemeProvider`/`useTheme` (`theme/ThemeProvider.tsx`) — the base
+  (no-class) token set in `tokens.css` is still the dark palette, `.light-theme`
+  is just applied on mount by default now instead of only after a user
+  opts in. Never branch in
   JS/TSX on the current theme to pick a color — that's what the CSS
   variables are for. The only legitimate JS-level theme awareness is
   `ThemeToggleButton`'s icon swap, and that's driven by a `:global(body.light-theme)`
@@ -36,21 +39,59 @@ around them does.
 - FR-22: theme choice persists to `localStorage` per device, not synced
   server-side. Don't add a backend call for this without re-reading FR-22.
 
-## Component structure
+## Component structure — Atomic Design
 
-- `components/ui/`: small, domain-agnostic primitives with no knowledge of
-  any specific feature (`Panel`, `Chip`). If a component needs to know what
-  a "client" or a "post" is, it doesn't belong in `ui/`.
-- `components/shell/`: the app chrome (sidebar, topbar, mobile header/tab
-  bar, theme toggle, nav config). Nothing feature-specific belongs here
-  either — `AppShell` renders an `<Outlet/>` for whatever the router gives it.
-- `components/auth/`: cross-cutting auth guards (`RequireAuth`).
-- `features/<name>/`: one folder per screen/module (`features/dashboard/`,
-  `features/auth/`). A feature folder owns its page component, its
-  sub-components, its data-fetching hook, and its CSS — nothing in
-  `features/` should be imported by another feature. If two features want
-  to share a component, promote it to `components/ui/` instead of importing
-  across feature folders.
+`src/` is organized by atomic-design level, one flat folder per level, and
+inside each level every component gets its own subfolder holding its
+`.tsx`/`.ts`, `.module.css`, and `.test` files together (e.g.
+`organisms/RevenueHero/RevenueHero.tsx`, `RevenueHero.module.css`, and its
+private `chartPath.ts`/`chartPath.test.ts` helper all live in
+`organisms/RevenueHero/`). A component's folder is decided by composition,
+not by which screen it happens to appear on first:
+
+- `atoms/`: indivisible elements with no sub-components (`Chip/`, `icons/`,
+  `ThemeToggleButton/`). An atom never imports from `molecules/`,
+  `organisms/`, `templates/`, or `pages/`.
+- `molecules/`: small groups of atoms wired into one functional unit
+  (`Panel/`, `MobileTabBar/`). A molecule may import atoms and `config/`, but
+  not organisms/templates/pages.
+- `organisms/`: compositions of atoms/molecules forming a distinct,
+  self-contained interface section (`Sidebar/`, `Topbar/`, `MobileHeader/`,
+  and every dashboard panel: `RevenueHero/`, `AttentionList/`,
+  `ContentPlanStrip/`, `FinanceStrip/`, `TeamWorkload/`, `EventLedger/`).
+  An organism may import atoms and molecules, never a template or page.
+- `templates/`: page layout only — arranges organisms into the app's
+  structural chrome without owning real content (`AppShell/`, which renders
+  an `<Outlet/>` for whatever the router gives it). A template may import
+  organisms, molecules, and atoms; nothing feature-specific belongs here.
+- `pages/`: a template's slot filled with real data (`DashboardPage/`,
+  `LoginPage/`). A page owns its data-fetching hook
+  (`DashboardPage/useDashboardOverview.ts`) and composes organisms — nothing
+  in `pages/` should be imported by another page. If two pages want to
+  share a component, promote it down to the appropriate
+  `organisms/`/`molecules/`/`atoms/` folder instead of importing across
+  page files.
+- `config/`: shared non-component data consumed across levels
+  (`navItems/navItems.ts` — read by both the `Sidebar` organism and the
+  `MobileTabBar` molecule). Not itself a level in the hierarchy.
+- `guards/`: cross-cutting, non-visual concerns that don't fit the visual
+  pyramid (`RequireAuth/`, a router-level auth wrapper). Deliberately kept
+  out of atoms→pages rather than forced into one.
+
+### Rules for Claude
+
+1. **Never skip levels**: an atom's file never imports an organism, and a
+   template never reaches past its organisms into another page's internals.
+   Do not nest an organism directly inside an atom.
+2. **Presentational components**: atoms and molecules stay presentational —
+   data in via props, events out via callbacks. Neither should call a hook
+   that fetches data.
+3. **Design tokens**: every value (color/spacing/radius/font/shadow) comes
+   from `theme/tokens.css` — see below. This applies at every level, not
+   just atoms.
+4. **Reusability check**: before adding a new organism, check `molecules/`
+   (and `atoms/`) for something composable instead of duplicating markup.
+
 - Every component's styles live in a co-located `*.module.css` (CSS
   Modules). No global class names outside `theme/global.css` and
   `theme/tokens.css` — those two files are the only places selectors are
@@ -70,10 +111,10 @@ rendering. This app takes that recommendation:
   genuinely two different DOM trees — that split uses `useMediaQuery` in
   `AppShell` to render one or the other. This is the *only* place in the
   app that should branch on viewport in JS.
-- **Page content** (everything in `features/dashboard/`, and every future
-  feature) is one component per screen, styled to reflow with CSS media
+- **Page content** (everything under `pages/`, and every future page) is
+  one component per screen, styled to reflow with CSS media
   queries at the same `900px` breakpoint (`@media (min-width: 900px)` — see
-  `EventLedger.module.css` for the fullest example: a `<table>` and a
+  `EventLedger/EventLedger.module.css` for the fullest example: a `<table>` and a
   `<ul>` stacked-row rendering both exist in the DOM, and CSS `display:
   none`s the one that doesn't apply). Don't add a second React component
   (`FooMobile.tsx`) for a screen that could instead reflow via CSS — that's
@@ -107,10 +148,10 @@ not a bug to silently "fix" by adding a label field nobody asked for.
   `DashboardOverviewResponse` in the backend, update `api/dashboard.ts`'s
   matching interface in the same change.
 - Reads go through TanStack Query (`useQuery`, see
-  `features/dashboard/useDashboardOverview.ts`) — one hook per feature,
-  named `use<Feature>`. Don't call the API module directly from a component;
-  go through the hook so caching/retry/loading state stay consistent.
-- Writes (once a feature needs them) should use `useMutation` and invalidate
+  `pages/DashboardPage/useDashboardOverview.ts`) — one hook per page, named
+  `use<Page>`. Don't call the API module directly from a component; go
+  through the hook so caching/retry/loading state stay consistent.
+- Writes (once a page needs them) should use `useMutation` and invalidate
   the relevant query key on success — there are no mutations yet, so there's
   no established pattern to copy; look at TanStack Query's own docs for the
   mutation API rather than improvising one.
@@ -119,25 +160,25 @@ not a bug to silently "fix" by adding a label field nobody asked for.
 
 - `hooks/useAuth.ts` holds the access token in `localStorage` (mirrors the
   backend's single-token simplification — see backend CLAUDE.md). No
-  refresh flow. `components/auth/RequireAuth.tsx` redirects to `/login` when
+  refresh flow. `guards/RequireAuth/RequireAuth.tsx` redirects to `/login` when
   there's no token; it does not verify the token is still valid (an expired
   token will fail the first API call and the user sees the error state, not
   an automatic redirect) — wire that up together with refresh-token support
   on the backend, not as a frontend-only patch.
-- `features/auth/LoginPage.tsx` only implements FR-01 (freelancer login).
+- `pages/LoginPage/LoginPage.tsx` only implements FR-01 (freelancer login).
   There's no agency-role picker (FR-02) yet.
 
 ## Testing
 
-- Vitest + React Testing Library. Test files live next to what they test
-  (`ChartPath.test.ts`, `AttentionList.test.tsx`) — no separate `__tests__`
-  tree.
+- Vitest + React Testing Library. Test files live in the same component
+  folder as what they test (`RevenueHero/chartPath.test.ts`,
+  `AttentionList/AttentionList.test.tsx`) — no separate `__tests__` tree.
 - Pure logic (`chartPath.ts`) gets plain Vitest unit tests with concrete
   input/output assertions, not snapshot tests.
 - Components get RTL render tests that assert on visible text/roles a user
   would actually see (`screen.getByText`, `getByRole`) — not on
   implementation details like internal state or CSS module class names.
-- A new feature isn't done until: at least one test per non-trivial pure
+- A new page isn't done until: at least one test per non-trivial pure
   function it introduces, and one render test per component proving both
   its populated and empty states (see `AttentionList.test.tsx` for the
   pattern) — most panels here have a meaningful empty state
@@ -153,13 +194,13 @@ not a bug to silently "fix" by adding a label field nobody asked for.
    field is always present.
 2. Add `api/<module>.ts` with typed request/response interfaces mirroring
    the backend's DTOs, and functions going through `apiRequest`.
-3. Add `features/<module>/use<Module>.ts` (TanStack Query hook) and
-   `features/<module>/<Module>Page.tsx` plus whatever sub-components/CSS
-   modules it needs, following the panel/empty-state patterns in
-   `features/dashboard/`.
+3. Add whatever `organisms/<Name>/` folders (and `molecules/`/`atoms/` if
+   new primitives are needed) the module's sections require, following the
+   panel/empty-state patterns already in `organisms/`. Then add
+   `pages/<Module>Page/use<Module>.ts` (TanStack Query hook) and
+   `pages/<Module>Page/<Module>Page.tsx` composing those organisms.
 4. Add the route in `router.tsx` and flip the corresponding entry in
-   `components/shell/navItems.ts` from a placeholder (no `path`) to a real
-   one.
+   `config/navItems/navItems.ts` from a placeholder (no `path`) to a real one.
 5. Style with `tokens.css` variables only; reflow responsively via CSS
    media queries at 900px rather than branching in JS (see "Responsive
    strategy" above).

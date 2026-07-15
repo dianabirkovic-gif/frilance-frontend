@@ -1,0 +1,87 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.filtersRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filterChips {
+  display: flex;
+  gap: 6px;
+  background: var(--ink-800);
+  border: 1px solid var(--line);
+  padding: 3px;
+  border-radius: var(--r-pill);
+}
+
+.filterChip {
+  padding: 7px 14px;
+  border-radius: var(--r-pill);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filterChip.active {
+  background: var(--ink-700);
+  color: var(--text-1);
+}
+
+:global(body.light-theme) .filterChip.active {
+  box-shadow: var(--sh-sm);
+}
+
+.count {
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  opacity: 0.8;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.newClientBtn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--brand-500);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: var(--r-md);
+}
+
+.newClientBtn:disabled {
+  opacity: 0.5;
+}
+
+.state {
+  padding: 60px 0;
+  text-align: center;
+  color: var(--text-2);
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.retry {
+  background: var(--ink-800);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 8px 16px;
+  font-weight: 600;
+  color: var(--text-1);
+}

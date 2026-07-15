@@ -8,7 +8,7 @@ design-reference repo) — this app is the React port of that prototype.
 Currently implemented: login (FR-01 only) and the Overview ("Огляд")
 dashboard screen, wired to `frilance-os-backend`'s `/api/v1/dashboard/overview`.
 Every other nav item in the sidebar/tab bar is a visual placeholder — see
-`components/shell/navItems.ts`.
+`config/navItems/navItems.ts`.
 
 ## Requirements
 

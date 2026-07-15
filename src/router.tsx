@@ -1,13 +1,13 @@
 import { createBrowserRouter } from "react-router-dom";
-import { RequireAuth } from "./components/auth/RequireAuth";
-import { AppShell } from "./components/shell/AppShell";
-import { LoginPage } from "./features/auth/LoginPage";
-import { DashboardPage } from "./features/dashboard/DashboardPage";
+import { RequireAuth } from "./guards/RequireAuth/RequireAuth";
+import { AppShell } from "./templates/AppShell/AppShell";
+import { LoginPage } from "./pages/LoginPage/LoginPage";
+import { DashboardPage } from "./pages/DashboardPage/DashboardPage";
+import { ClientsPage } from "./pages/ClientsPage/ClientsPage";
 
 /**
- * One protected route today. New modules add a sibling route here and a
- * nav entry in `components/shell/navItems.ts` — see frontend CLAUDE.md
- * "Adding a new module".
+ * New modules add a sibling route here and a nav entry in
+ * `config/navItems.ts` — see frontend CLAUDE.md "Adding a new module".
  */
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -18,6 +18,9 @@ export const router = createBrowserRouter([
         <AppShell />
       </RequireAuth>
     ),
-    children: [{ index: true, element: <DashboardPage /> }],
+    children: [
+      { index: true, element: <DashboardPage /> },
+      { path: "clients", element: <ClientsPage /> },
+    ],
   },
 ]);
