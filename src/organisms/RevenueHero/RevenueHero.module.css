@@ -67,6 +67,11 @@
   font-size: 11.5px;
   font-weight: 600;
   color: var(--text-3);
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+
+.rangeButton:hover:not(.active) {
+  color: var(--text-2);
 }
 
 .active {

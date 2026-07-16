@@ -125,6 +125,14 @@
   justify-content: center;
   color: var(--text-2);
   flex-shrink: 0;
+  transition:
+    background var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
+}
+
+.closeBtn:hover {
+  background: var(--ink-700);
+  color: var(--text-1);
 }
 
 .quickActions {
@@ -145,12 +153,21 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--text-2);
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+
+.qaBtn:hover:not(:disabled) {
+  background: var(--ink-700);
 }
 
 .qaBtn.primary {
   background: var(--brand-500);
   color: #fff;
   border-color: transparent;
+}
+
+.qaBtn.primary:hover:not(:disabled) {
+  background: var(--brand-600);
 }
 
 .tabs {
@@ -173,6 +190,11 @@
   display: flex;
   align-items: center;
   gap: 5px;
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+
+.tab:hover:not(.active) {
+  color: var(--text-2);
 }
 
 .tab.active {
@@ -292,6 +314,14 @@
   align-items: center;
   justify-content: center;
   color: var(--text-2);
+  transition:
+    background var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
+}
+
+.contactActions button:hover:not(:disabled) {
+  background: var(--ink-700);
+  color: var(--text-1);
 }
 
 .activityRow {
