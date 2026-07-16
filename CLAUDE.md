@@ -5,6 +5,15 @@ dashboard.html — kept in the design-reference repo), talking to
 `frilance-os-backend`. Read this before adding a screen or component; the
 "Adding a new module" section at the bottom is the checklist to follow.
 
+## Requirements tracking
+
+New product requirements that come up mid-session (a feature ask, a changed
+acceptance criterion, anything not already in the SRS) get recorded in
+`../freelance-all/new-requirements.md` — that file is the running log of
+requirements gathered outside the SRS document, shared across the frontend
+and backend repos. Add an entry there when a new requirement surfaces,
+alongside implementing it.
+
 ## Current state
 
 Implemented: login (FR-01) and the Overview dashboard screen, end to end

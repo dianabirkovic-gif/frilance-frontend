@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Panel } from "../../molecules/Panel/Panel";
 import type { AttentionItem } from "../../api/dashboard";
 import styles from "./AttentionList.module.css";
@@ -12,9 +13,9 @@ export function AttentionList({ items }: { items: AttentionItem[] }) {
     <Panel className={styles.panel}>
       <div className={styles.head}>
         <div className={styles.title}>Потребують уваги</div>
-        <a className={styles.link} href="#">
+        <Link className={styles.link} to="/clients">
           Усі →
-        </a>
+        </Link>
       </div>
       {items.length === 0 ? (
         <div className={styles.empty}>Немає сигналів, що потребують уваги.</div>

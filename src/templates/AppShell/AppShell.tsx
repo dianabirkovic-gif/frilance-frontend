@@ -5,6 +5,7 @@ import { MobileHeader } from "../../organisms/MobileHeader/MobileHeader";
 import { MobileTabBar } from "../../molecules/MobileTabBar/MobileTabBar";
 import { Sidebar } from "../../organisms/Sidebar/Sidebar";
 import { Topbar } from "../../organisms/Topbar/Topbar";
+import { PageFabProvider } from "./PageFabContext";
 import { PageHeaderProvider, useCurrentPageHeader } from "./PageHeaderContext";
 import styles from "./AppShell.module.css";
 
@@ -21,7 +22,9 @@ import styles from "./AppShell.module.css";
 export function AppShell() {
   return (
     <PageHeaderProvider>
-      <AppShellChrome />
+      <PageFabProvider>
+        <AppShellChrome />
+      </PageFabProvider>
     </PageHeaderProvider>
   );
 }

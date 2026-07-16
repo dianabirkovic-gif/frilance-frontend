@@ -270,6 +270,12 @@
   margin-top: 1px;
 }
 
+.contactMeta {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 1px;
+}
+
 .contactActions {
   margin-left: auto;
   display: flex;

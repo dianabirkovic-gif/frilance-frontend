@@ -1,12 +1,16 @@
-import { useMemo, useState } from "react";
-import type { ClientListItem, ClientStatus } from "../../api/clients";
+import { useCallback, useMemo, useState } from "react";
+import type { ClientListItem, ClientStatus, CreateClientPayload } from "../../api/clients";
 import { PlusIcon } from "../../atoms/icons/icons";
+import { AddClientDrawer } from "../../organisms/AddClientDrawer/AddClientDrawer";
 import { ClientDetailDrawer } from "../../organisms/ClientDetailDrawer/ClientDetailDrawer";
 import { ClientTable } from "../../organisms/ClientTable/ClientTable";
+import { usePageFab } from "../../templates/AppShell/PageFabContext";
 import { usePageHeader } from "../../templates/AppShell/PageHeaderContext";
 import styles from "./ClientsPage.module.css";
+import { useArchiveClient } from "./useArchiveClient";
 import { useClientDetail } from "./useClientDetail";
 import { useClients } from "./useClients";
+import { useCreateClient } from "./useCreateClient";
 
 type FilterId = "all" | "active" | "attention" | "archived";
 
@@ -25,13 +29,24 @@ export function ClientsPage() {
   const { data, isLoading, isError, error, refetch } = useClients();
   const [activeFilter, setActiveFilter] = useState<FilterId>("all");
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [isAddClientOpen, setIsAddClientOpen] = useState(false);
   const clientDetail = useClientDetail(selectedClientId);
+  const createClient = useCreateClient();
+  const archiveClient = useArchiveClient();
 
   const attentionCount = data ? countFor(data, "ATTENTION") : 0;
   usePageHeader({
     title: "Клієнти",
     subtitle: data ? `${data.length} клієнтів · ${attentionCount} потребують уваги` : "",
   });
+
+  const openAddClient = useCallback(() => setIsAddClientOpen(true), []);
+  usePageFab({ label: "Новий клієнт", onClick: openAddClient });
+
+  async function handleCreateClient(payload: CreateClientPayload) {
+    await createClient.mutateAsync(payload);
+    setIsAddClientOpen(false);
+  }
 
   const activeFilterStatus = FILTERS.find((f) => f.id === activeFilter)?.status ?? null;
   const filteredClients = useMemo(() => {
@@ -69,7 +84,7 @@ export function ClientsPage() {
           ))}
         </div>
         <div className={styles.spacer} />
-        <button className={styles.newClientBtn} disabled title="Ще не реалізовано">
+        <button type="button" className={styles.newClientBtn} onClick={openAddClient}>
           <PlusIcon width={15} height={15} />
           Новий клієнт
         </button>
@@ -81,7 +96,16 @@ export function ClientsPage() {
         open={selectedClientId !== null}
         detail={clientDetail.data}
         isLoading={clientDetail.isLoading}
+        isArchiving={archiveClient.isPending}
         onClose={() => setSelectedClientId(null)}
+        onArchive={(clientId) => archiveClient.mutateAsync(clientId)}
+      />
+
+      <AddClientDrawer
+        open={isAddClientOpen}
+        isSubmitting={createClient.isPending}
+        onSubmit={handleCreateClient}
+        onClose={() => setIsAddClientOpen(false)}
       />
     </div>
   );

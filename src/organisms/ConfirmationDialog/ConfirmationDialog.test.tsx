@@ -1,0 +1,74 @@
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { ConfirmationDialog } from "./ConfirmationDialog";
+
+describe("ConfirmationDialog", () => {
+  it("renders the title, message and default action labels", () => {
+    render(
+      <ConfirmationDialog
+        open
+        title="Архівувати клієнта"
+        message="Заархівувати клієнта «MUSE'23»?"
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Архівувати клієнта")).toBeInTheDocument();
+    expect(screen.getByText("Заархівувати клієнта «MUSE'23»?")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Скасувати" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Підтвердити" })).toBeInTheDocument();
+  });
+
+  it("hides itself from assistive tech and blocks clicks when closed", () => {
+    render(
+      <ConfirmationDialog
+        open={false}
+        title="Архівувати клієнта"
+        message="Заархівувати клієнта «MUSE'23»?"
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("alertdialog", { hidden: true })).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("calls onConfirm/onCancel with custom labels", () => {
+    const onConfirm = vi.fn();
+    const onCancel = vi.fn();
+    render(
+      <ConfirmationDialog
+        open
+        title="Видалити файл"
+        message="Цю дію не можна скасувати."
+        confirmLabel="Видалити"
+        cancelLabel="Назад"
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+      />,
+    );
+
+    screen.getByRole("button", { name: "Видалити" }).click();
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+
+    screen.getByRole("button", { name: "Назад" }).click();
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables both actions and shows a waiting label while confirming", () => {
+    render(
+      <ConfirmationDialog
+        open
+        isConfirming
+        title="Архівувати клієнта"
+        message="Заархівувати клієнта «MUSE'23»?"
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Зачекайте..." })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Скасувати" })).toBeDisabled();
+  });
+});

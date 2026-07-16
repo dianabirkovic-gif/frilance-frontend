@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import type { ClientDetail } from "../../api/clients";
+import { ApiError } from "../../api/client";
 import { CloseIcon, LockIcon, MessageIcon, PhoneIcon } from "../../atoms/icons/icons";
+import { ConfirmationDialog } from "../ConfirmationDialog/ConfirmationDialog";
 import { initials } from "../../utils/initials";
 import { CooperationTimeline } from "./CooperationTimeline";
 import styles from "./ClientDetailDrawer.module.css";
@@ -21,7 +23,9 @@ interface ClientDetailDrawerProps {
   open: boolean;
   detail: ClientDetail | undefined;
   isLoading: boolean;
+  isArchiving: boolean;
   onClose: () => void;
+  onArchive: (clientId: string) => Promise<unknown>;
 }
 
 /**
@@ -31,7 +35,14 @@ interface ClientDetailDrawerProps {
  * mockup's own empty-state copy — FR-06's encrypted notes are explicitly
  * out of scope, so Нотатки never becomes more than the lock-note warning.
  */
-export function ClientDetailDrawer({ open, detail, isLoading, onClose }: ClientDetailDrawerProps) {
+export function ClientDetailDrawer({
+  open,
+  detail,
+  isLoading,
+  isArchiving,
+  onClose,
+  onArchive,
+}: ClientDetailDrawerProps) {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
 
   useEffect(() => {
@@ -48,7 +59,14 @@ export function ClientDetailDrawer({ open, detail, isLoading, onClose }: ClientD
         {isLoading || !detail ? (
           <div className={styles.empty}>Завантаження…</div>
         ) : (
-          <ClientDetailContent detail={detail} activeTab={activeTab} onSelectTab={setActiveTab} onClose={onClose} />
+          <ClientDetailContent
+            detail={detail}
+            activeTab={activeTab}
+            isArchiving={isArchiving}
+            onSelectTab={setActiveTab}
+            onClose={onClose}
+            onArchive={onArchive}
+          />
         )}
       </div>
     </>
@@ -58,15 +76,31 @@ export function ClientDetailDrawer({ open, detail, isLoading, onClose }: ClientD
 function ClientDetailContent({
   detail,
   activeTab,
+  isArchiving,
   onSelectTab,
   onClose,
+  onArchive,
 }: {
   detail: ClientDetail;
   activeTab: Tab;
+  isArchiving: boolean;
   onSelectTab: (tab: Tab) => void;
   onClose: () => void;
+  onArchive: (clientId: string) => Promise<unknown>;
 }) {
   const subtitle = [detail.niche, detail.assigneeName].filter(Boolean).join(" · ");
+  const isArchived = detail.status === "ARCHIVED";
+  const [confirmArchiveOpen, setConfirmArchiveOpen] = useState(false);
+
+  async function handleConfirmArchive() {
+    try {
+      await onArchive(detail.id);
+      setConfirmArchiveOpen(false);
+    } catch (err) {
+      setConfirmArchiveOpen(false);
+      window.alert(err instanceof ApiError ? err.message : "Не вдалося заархівувати клієнта. Спробуйте ще раз.");
+    }
+  }
 
   return (
     <>
@@ -90,8 +124,12 @@ function ClientDetailContent({
           <button className={styles.qaBtn} disabled title="Ще не реалізовано">
             Виставити рахунок
           </button>
-          <button className={styles.qaBtn} disabled title="Ще не реалізовано">
-            Архівувати
+          <button
+            className={styles.qaBtn}
+            disabled={isArchived || isArchiving}
+            onClick={() => setConfirmArchiveOpen(true)}
+          >
+            {isArchived ? "Заархівовано" : isArchiving ? "Архівуємо..." : "Архівувати"}
           </button>
         </div>
       </div>
@@ -137,6 +175,17 @@ function ClientDetailContent({
           <div className={styles.empty}>Нотатки клієнта з'являться тут після розшифрування.</div>
         </div>
       )}
+
+      <ConfirmationDialog
+        open={confirmArchiveOpen}
+        title="Архівувати клієнта"
+        message={`Заархівувати клієнта «${detail.name}»?`}
+        confirmLabel="Архівувати"
+        cancelLabel="Скасувати"
+        isConfirming={isArchiving}
+        onConfirm={handleConfirmArchive}
+        onCancel={() => setConfirmArchiveOpen(false)}
+      />
     </>
   );
 }
@@ -170,6 +219,11 @@ function OverviewTab({ detail }: { detail: ClientDetail }) {
             <div>
               <div className={styles.contactName}>{detail.contactName}</div>
               {detail.contactRole && <div className={styles.contactRole}>{detail.contactRole}</div>}
+              {(detail.contactPhone || detail.contactEmail) && (
+                <div className={styles.contactMeta}>
+                  {[detail.contactPhone, detail.contactEmail].filter(Boolean).join(" · ")}
+                </div>
+              )}
             </div>
             <div className={styles.contactActions}>
               <button disabled title="Ще не реалізовано" aria-label="Подзвонити">
