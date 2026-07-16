@@ -165,6 +165,60 @@ not a bug to silently "fix" by adding a label field nobody asked for.
   no established pattern to copy; look at TanStack Query's own docs for the
   mutation API rather than improvising one.
 
+## Internationalization (i18n) — never hardcode a user-facing string
+
+All copy lives in `src/i18n/` — a typed dictionary + provider, not a library
+(no `react-i18next`/`react-intl` dependency; a custom solution was chosen to
+match this repo's anti-overengineering stance).
+
+- `i18n/dictionary.ts` — the `Dictionary` interface. Every locale file is
+  checked against it, so a missing/extra key in `uk.ts`/`en.ts` is a compile
+  error. Nested by feature (mirrors the component/page owning the string),
+  plus shared namespaces keyed by domain enum (`clientStatus`, `clientStage`,
+  `role`, `nav`) so every place needing "the label for enum value X" reads
+  the same entry instead of re-declaring it.
+- `i18n/locales/uk.ts` / `en.ts` — the actual copy. `uk` is the default/source
+  of truth; `en` must stay a real translation, not a placeholder.
+- `i18n/LocaleProvider.tsx` / `useLocale.ts` — mirrors `theme/ThemeProvider.tsx`/
+  `useTheme.ts` exactly: context + provider + hook that throws outside the
+  provider, persists the chosen locale to `localStorage`
+  (`frilanceos.locale`, defaults to `"uk"`, independent of `frilanceos.theme`).
+  Call `const { t } = useLocale();` inside a component body — atoms included
+  (see `Chip`, `StatusBadge`, `ThemeToggleButton`/`LocaleToggleButton`).
+- `i18n/interpolate.ts` — the only interpolation mechanism. A dictionary
+  value containing `{placeholder}` tokens is named with a `Template` suffix
+  (`subtitleTemplate`, `archiveConfirmMessageTemplate`) so it's obvious at
+  the call site it needs `interpolate(t.ns.xTemplate, { ... })` rather than
+  being rendered directly.
+- `LocaleToggleButton` (atom) — the user-facing switch, wired into `Topbar`
+  and `MobileHeader` next to `ThemeToggleButton`.
+
+### Rules for Claude
+
+1. **Never hardcode a user-facing string** in a `.tsx` file — add a key to
+   `Dictionary` and both locale files, then reference it as
+   `t.<namespace>.<key>`. Same severity as the design-tokens rule above:
+   review-blocking, not a style nit.
+2. **Module-level constant arrays/maps may hold identifiers, never labels.**
+   If you're building a `<select>`'s options or a static lookup table outside
+   the component body, keep only the enum/id at module scope
+   (`STATUS_VALUES: ClientStatus[]`) and resolve the label inside the
+   component via `useLocale()` (through `useMemo` if it feeds a `.map()`) —
+   see `AddClientDrawer`'s `statusOptions`/`stageOptions` for the pattern.
+3. **Proper nouns aren't translated.** The brand name lives in
+   `config/brand.ts` (`BRAND_NAME`), not the dictionary.
+4. **Tests must wrap in `<LocaleProvider>`** if the component (or any
+   descendant) calls `useLocale()`, and assert against the `uk` dictionary
+   import (`import { uk } from "../../i18n/locales/uk"`) rather than a
+   hardcoded literal or "whatever the default happens to be" — see any
+   organism `.test.tsx` for the pattern. Note `src/test/setupTests.ts`
+   polyfills `window.localStorage`: Node 22+'s experimental global
+   `localStorage` shadows jsdom's own, leaving it `undefined` in tests
+   without this — needed by both `ThemeProvider` and `LocaleProvider`.
+5. **Adding a third language** is just: add `locales/xx.ts` satisfying
+   `Dictionary`, add it to `LocaleProvider`'s `DICTIONARIES` map and the
+   `Locale` union. No other file changes needed.
+
 ## Auth
 
 - `hooks/useAuth.ts` holds the access token in `localStorage` (mirrors the
@@ -213,4 +267,8 @@ not a bug to silently "fix" by adding a label field nobody asked for.
 5. Style with `tokens.css` variables only; reflow responsively via CSS
    media queries at 900px rather than branching in JS (see "Responsive
    strategy" above).
-6. Tests per the Testing section.
+6. Add every label/error/empty-state string to `i18n/dictionary.ts` and both
+   `locales/uk.ts`/`en.ts` — no hardcoded copy in the new components (see
+   "Internationalization" above).
+7. Tests per the Testing section, wrapping in `<LocaleProvider>` if any
+   rendered component calls `useLocale()`.
