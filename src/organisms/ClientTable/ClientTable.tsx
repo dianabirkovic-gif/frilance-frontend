@@ -1,5 +1,6 @@
 import type { ClientListItem } from "../../api/clients";
 import { StatusBadge } from "../../atoms/StatusBadge/StatusBadge";
+import { useLocale } from "../../i18n/useLocale";
 import { Panel } from "../../molecules/Panel/Panel";
 import { initials } from "../../utils/initials";
 import styles from "./ClientTable.module.css";
@@ -23,10 +24,12 @@ interface ClientTableProps {
  * "boxes-in-boxes" desktop pattern — the desktop view stays a real table.
  */
 export function ClientTable({ clients, onSelectClient }: ClientTableProps) {
+  const { t } = useLocale();
+
   if (clients.length === 0) {
     return (
       <Panel flush className={styles.panel}>
-        <div className={styles.empty}>Клієнтів не знайдено.</div>
+        <div className={styles.empty}>{t.clientTable.empty}</div>
       </Panel>
     );
   }
@@ -37,12 +40,12 @@ export function ClientTable({ clients, onSelectClient }: ClientTableProps) {
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Клієнт</th>
-              <th>Спеціаліст</th>
-              <th>Статус</th>
-              <th>Наступна публікація</th>
-              <th>Дохід / міс</th>
-              <th>Активність</th>
+              <th>{t.clientTable.headers.client}</th>
+              <th>{t.clientTable.headers.specialist}</th>
+              <th>{t.clientTable.headers.status}</th>
+              <th>{t.clientTable.headers.nextPost}</th>
+              <th>{t.clientTable.headers.revenue}</th>
+              <th>{t.clientTable.headers.activity}</th>
               <th></th>
             </tr>
           </thead>

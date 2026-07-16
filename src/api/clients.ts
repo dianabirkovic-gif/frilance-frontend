@@ -40,6 +40,9 @@ export interface ActivityEntry {
 export type ClientStatus = "ACTIVE" | "ATTENTION" | "NEW" | "ARCHIVED";
 export type ClientStage = "BRIEF" | "ESTIMATE" | "PAYMENT" | "WORK_STARTED" | "REPORT";
 
+/** Display order for the cooperation stages — shared by AddClientDrawer's stage select and CooperationTimeline. */
+export const CLIENT_STAGE_ORDER: ClientStage[] = ["BRIEF", "ESTIMATE", "PAYMENT", "WORK_STARTED", "REPORT"];
+
 /**
  * Mirrors CreateClientRequest on the backend exactly — keep in sync. No
  * `assigneeId` field yet: agency-mode team-member assignment has no data

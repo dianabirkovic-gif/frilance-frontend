@@ -1,20 +1,22 @@
-import type { ClientStage, ClientStatus } from "../../api/clients";
+import { CLIENT_STAGE_ORDER, type ClientStage, type ClientStatus } from "../../api/clients";
+import { useLocale } from "../../i18n/useLocale";
 import { timelineNodeX } from "./timelineLayout";
 import styles from "./ClientDetailDrawer.module.css";
-
-const STAGE_ORDER: ClientStage[] = ["BRIEF", "ESTIMATE", "PAYMENT", "WORK_STARTED", "REPORT"];
-const STAGE_LABELS = ["Бріф", "Кошторис", "Оплата", "Старт робіт", "Звіт"];
 
 /**
  * The Ledger Line motif reused as a cooperation-stage timeline
  * (DESIGN_SYSTEM.md §12) — line + nodes + labels, ported from clients.html's
- * `renderTimeline`. Archived clients show "Завершено" on the last node
- * instead of "Звіт" — presentational only, no separate backend field.
+ * `renderTimeline`. Archived clients show the "completed" override on the
+ * last node instead of the final stage label — presentational only, no
+ * separate backend field.
  */
 export function CooperationTimeline({ stage, status }: { stage: ClientStage; status: ClientStatus }) {
-  const step = Math.max(0, STAGE_ORDER.indexOf(stage));
-  const count = STAGE_LABELS.length;
-  const labels = status === "ARCHIVED" ? [...STAGE_LABELS.slice(0, -1), "Завершено"] : STAGE_LABELS;
+  const { t } = useLocale();
+  const step = Math.max(0, CLIENT_STAGE_ORDER.indexOf(stage));
+  const stageLabels = CLIENT_STAGE_ORDER.map((value) => t.clientStage[value]);
+  const count = stageLabels.length;
+  const labels =
+    status === "ARCHIVED" ? [...stageLabels.slice(0, -1), t.cooperationTimeline.completedOverride] : stageLabels;
   const progressX = timelineNodeX(step, count);
 
   return (

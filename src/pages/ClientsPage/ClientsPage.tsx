@@ -1,6 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
 import type { ClientListItem, ClientStatus, CreateClientPayload } from "../../api/clients";
 import { PlusIcon } from "../../atoms/icons/icons";
+import type { FilterId } from "../../i18n/dictionary";
+import { interpolate } from "../../i18n/interpolate";
+import { useLocale } from "../../i18n/useLocale";
 import { AddClientDrawer } from "../../organisms/AddClientDrawer/AddClientDrawer";
 import { ClientDetailDrawer } from "../../organisms/ClientDetailDrawer/ClientDetailDrawer";
 import { ClientTable } from "../../organisms/ClientTable/ClientTable";
@@ -12,13 +15,11 @@ import { useClientDetail } from "./useClientDetail";
 import { useClients } from "./useClients";
 import { useCreateClient } from "./useCreateClient";
 
-type FilterId = "all" | "active" | "attention" | "archived";
-
-const FILTERS: { id: FilterId; label: string; status: ClientStatus | null }[] = [
-  { id: "all", label: "Усі", status: null },
-  { id: "active", label: "Активні", status: "ACTIVE" },
-  { id: "attention", label: "Потребують уваги", status: "ATTENTION" },
-  { id: "archived", label: "Архів", status: "ARCHIVED" },
+const FILTER_STATUS: { id: FilterId; status: ClientStatus | null }[] = [
+  { id: "all", status: null },
+  { id: "active", status: "ACTIVE" },
+  { id: "attention", status: "ATTENTION" },
+  { id: "archived", status: "ARCHIVED" },
 ];
 
 function countFor(clients: ClientListItem[], status: ClientStatus | null): number {
@@ -27,6 +28,7 @@ function countFor(clients: ClientListItem[], status: ClientStatus | null): numbe
 
 export function ClientsPage() {
   const { data, isLoading, isError, error, refetch } = useClients();
+  const { t } = useLocale();
   const [activeFilter, setActiveFilter] = useState<FilterId>("all");
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
@@ -34,36 +36,44 @@ export function ClientsPage() {
   const createClient = useCreateClient();
   const archiveClient = useArchiveClient();
 
+  const filters = useMemo(
+    () => FILTER_STATUS.map((filter) => ({ ...filter, label: t.clientsPage.filters[filter.id] })),
+    [t],
+  );
+
   const attentionCount = data ? countFor(data, "ATTENTION") : 0;
   usePageHeader({
-    title: "Клієнти",
-    subtitle: data ? `${data.length} клієнтів · ${attentionCount} потребують уваги` : "",
+    title: t.clientsPage.title,
+    subtitle: data ? interpolate(t.clientsPage.subtitleTemplate, { count: data.length, attentionCount }) : "",
   });
 
   const openAddClient = useCallback(() => setIsAddClientOpen(true), []);
-  usePageFab({ label: "Новий клієнт", onClick: openAddClient });
+  usePageFab({ label: t.clientsPage.newClientButton, onClick: openAddClient });
 
   async function handleCreateClient(payload: CreateClientPayload) {
     await createClient.mutateAsync(payload);
     setIsAddClientOpen(false);
   }
 
-  const activeFilterStatus = FILTERS.find((f) => f.id === activeFilter)?.status ?? null;
+  const activeFilterStatus = filters.find((f) => f.id === activeFilter)?.status ?? null;
   const filteredClients = useMemo(() => {
     if (!data) return [];
     return activeFilterStatus === null ? data : data.filter((c) => c.status === activeFilterStatus);
   }, [data, activeFilterStatus]);
 
   if (isLoading) {
-    return <div className={styles.state}>Завантаження…</div>;
+    return <div className={styles.state}>{t.clientsPage.loading}</div>;
   }
 
   if (isError || !data) {
     return (
       <div className={styles.state}>
-        <p>Не вдалося завантажити дані. {error instanceof Error ? error.message : ""}</p>
+        <p>
+          {t.clientsPage.loadErrorPrefix}
+          {error instanceof Error ? error.message : ""}
+        </p>
         <button type="button" onClick={() => refetch()} className={styles.retry}>
-          Спробувати ще раз
+          {t.clientsPage.retry}
         </button>
       </div>
     );
@@ -73,7 +83,7 @@ export function ClientsPage() {
     <div className={styles.page}>
       <div className={styles.filtersRow}>
         <div className={styles.filterChips}>
-          {FILTERS.map((filter) => (
+          {filters.map((filter) => (
             <button
               key={filter.id}
               className={filter.id === activeFilter ? `${styles.filterChip} ${styles.active}` : styles.filterChip}
@@ -86,7 +96,7 @@ export function ClientsPage() {
         <div className={styles.spacer} />
         <button type="button" className={styles.newClientBtn} onClick={openAddClient}>
           <PlusIcon width={15} height={15} />
-          Новий клієнт
+          {t.clientsPage.newClientButton}
         </button>
       </div>
 

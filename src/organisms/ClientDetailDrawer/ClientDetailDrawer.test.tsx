@@ -1,6 +1,9 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { ClientDetail } from "../../api/clients";
+import { interpolate } from "../../i18n/interpolate";
+import { LocaleProvider } from "../../i18n/LocaleProvider";
+import { uk } from "../../i18n/locales/uk";
 import { ClientDetailDrawer } from "./ClientDetailDrawer";
 
 const sample: ClientDetail = {
@@ -22,14 +25,16 @@ const sample: ClientDetail = {
 describe("ClientDetailDrawer", () => {
   it("renders the client's card fields, stats, contact and activity", () => {
     render(
-      <ClientDetailDrawer
-        open
-        detail={sample}
-        isLoading={false}
-        isArchiving={false}
-        onClose={vi.fn()}
-        onArchive={vi.fn()}
-      />,
+      <LocaleProvider>
+        <ClientDetailDrawer
+          open
+          detail={sample}
+          isLoading={false}
+          isArchiving={false}
+          onClose={vi.fn()}
+          onArchive={vi.fn()}
+        />
+      </LocaleProvider>,
     );
 
     expect(screen.getByText("MUSE'23")).toBeInTheDocument();
@@ -42,53 +47,61 @@ describe("ClientDetailDrawer", () => {
 
   it("shows an empty state instead of an empty list when there is no activity yet", () => {
     render(
-      <ClientDetailDrawer
-        open
-        detail={{ ...sample, activity: [] }}
-        isLoading={false}
-        isArchiving={false}
-        onClose={vi.fn()}
-        onArchive={vi.fn()}
-      />,
+      <LocaleProvider>
+        <ClientDetailDrawer
+          open
+          detail={{ ...sample, activity: [] }}
+          isLoading={false}
+          isArchiving={false}
+          onClose={vi.fn()}
+          onArchive={vi.fn()}
+        />
+      </LocaleProvider>,
     );
 
-    expect(screen.getByText("Ще немає подій.")).toBeInTheDocument();
+    expect(screen.getByText(uk.clientDetailDrawer.activityEmpty)).toBeInTheDocument();
   });
 
   it("shows a loading state while the detail query is in flight", () => {
     render(
-      <ClientDetailDrawer
-        open
-        detail={undefined}
-        isLoading
-        isArchiving={false}
-        onClose={vi.fn()}
-        onArchive={vi.fn()}
-      />,
+      <LocaleProvider>
+        <ClientDetailDrawer
+          open
+          detail={undefined}
+          isLoading
+          isArchiving={false}
+          onClose={vi.fn()}
+          onArchive={vi.fn()}
+        />
+      </LocaleProvider>,
     );
 
-    expect(screen.getByText("Завантаження…")).toBeInTheDocument();
+    expect(screen.getByText(uk.clientDetailDrawer.loading)).toBeInTheDocument();
   });
 
   it("opens the confirmation dialog and archives the client after confirming", async () => {
     const onArchive = vi.fn().mockResolvedValue(undefined);
     render(
-      <ClientDetailDrawer
-        open
-        detail={sample}
-        isLoading={false}
-        isArchiving={false}
-        onClose={vi.fn()}
-        onArchive={onArchive}
-      />,
+      <LocaleProvider>
+        <ClientDetailDrawer
+          open
+          detail={sample}
+          isLoading={false}
+          isArchiving={false}
+          onClose={vi.fn()}
+          onArchive={onArchive}
+        />
+      </LocaleProvider>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Архівувати" }));
+    fireEvent.click(screen.getByRole("button", { name: uk.clientDetailDrawer.archiveIdle }));
 
     const dialog = screen.getByRole("alertdialog");
-    expect(within(dialog).getByText("Заархівувати клієнта «MUSE'23»?")).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(interpolate(uk.clientDetailDrawer.archiveConfirmMessageTemplate, { name: "MUSE'23" })),
+    ).toBeInTheDocument();
 
-    fireEvent.click(within(dialog).getByRole("button", { name: "Архівувати" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: uk.clientDetailDrawer.archiveIdle }));
 
     await waitFor(() => expect(onArchive).toHaveBeenCalledWith("1"));
   });
@@ -96,35 +109,39 @@ describe("ClientDetailDrawer", () => {
   it("skips archiving when the confirmation dialog is cancelled", () => {
     const onArchive = vi.fn();
     render(
-      <ClientDetailDrawer
-        open
-        detail={sample}
-        isLoading={false}
-        isArchiving={false}
-        onClose={vi.fn()}
-        onArchive={onArchive}
-      />,
+      <LocaleProvider>
+        <ClientDetailDrawer
+          open
+          detail={sample}
+          isLoading={false}
+          isArchiving={false}
+          onClose={vi.fn()}
+          onArchive={onArchive}
+        />
+      </LocaleProvider>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Архівувати" }));
+    fireEvent.click(screen.getByRole("button", { name: uk.clientDetailDrawer.archiveIdle }));
     const dialog = screen.getByRole("alertdialog");
-    fireEvent.click(within(dialog).getByRole("button", { name: "Скасувати" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: uk.confirmationDialog.cancelLabel }));
 
     expect(onArchive).not.toHaveBeenCalled();
   });
 
   it("shows the client as already archived instead of offering the action again", () => {
     render(
-      <ClientDetailDrawer
-        open
-        detail={{ ...sample, status: "ARCHIVED" }}
-        isLoading={false}
-        isArchiving={false}
-        onClose={vi.fn()}
-        onArchive={vi.fn()}
-      />,
+      <LocaleProvider>
+        <ClientDetailDrawer
+          open
+          detail={{ ...sample, status: "ARCHIVED" }}
+          isLoading={false}
+          isArchiving={false}
+          onClose={vi.fn()}
+          onArchive={vi.fn()}
+        />
+      </LocaleProvider>,
     );
 
-    expect(screen.getByRole("button", { name: "Заархівовано" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: uk.clientDetailDrawer.archiveDone })).toBeDisabled();
   });
 });

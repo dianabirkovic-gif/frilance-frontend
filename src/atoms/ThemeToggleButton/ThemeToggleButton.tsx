@@ -1,9 +1,11 @@
+import { useLocale } from "../../i18n/useLocale";
 import { useTheme } from "../../theme/useTheme";
 import { MoonIcon, SunIcon } from "../icons/icons";
 import styles from "./ThemeToggleButton.module.css";
 
 export function ThemeToggleButton({ size = "desktop" }: { size?: "desktop" | "mobile" }) {
   const { theme, toggleTheme } = useTheme();
+  const { t } = useLocale();
   const buttonClass = size === "mobile" ? styles.mobileButton : styles.button;
 
   return (
@@ -11,7 +13,7 @@ export function ThemeToggleButton({ size = "desktop" }: { size?: "desktop" | "mo
       type="button"
       className={buttonClass}
       onClick={toggleTheme}
-      aria-label="Перемкнути тему"
+      aria-label={t.themeToggle.ariaLabel}
       aria-pressed={theme === "light"}
     >
       <MoonIcon className={`${styles.icon} ${styles.moon}`} width={16} height={16} />

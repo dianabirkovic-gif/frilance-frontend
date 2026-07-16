@@ -3,15 +3,6 @@ import { apiRequest } from "./client";
 export type Role = "OWNER" | "PROJECT_MANAGER" | "SMM" | "TARGETOLOGIST" | "FREELANCER";
 export type WorkMode = "FREELANCER" | "AGENCY";
 
-/** Mirrors backend Role — display label only, not an access decision (that's server-side, see backend CLAUDE.md). */
-export const ROLE_LABEL: Record<Role, string> = {
-  OWNER: "Власниця агентства",
-  PROJECT_MANAGER: "Проджект-менеджер",
-  SMM: "SMM-спеціаліст",
-  TARGETOLOGIST: "Таргетолог",
-  FREELANCER: "Фрілансер",
-};
-
 export interface AuthResponse {
   accessToken: string;
   fullName: string;

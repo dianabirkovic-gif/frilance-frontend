@@ -1,23 +1,12 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import type { ClientStage, ClientStatus, CreateClientPayload } from "../../api/clients";
+import { CLIENT_STAGE_ORDER } from "../../api/clients";
 import { ApiError } from "../../api/client";
 import { CloseIcon } from "../../atoms/icons/icons";
+import { useLocale } from "../../i18n/useLocale";
 import styles from "./AddClientDrawer.module.css";
 
-const STATUS_OPTIONS: { value: ClientStatus; label: string }[] = [
-  { value: "NEW", label: "Новий" },
-  { value: "ACTIVE", label: "Активний" },
-  { value: "ATTENTION", label: "Потребує уваги" },
-  { value: "ARCHIVED", label: "Архів" },
-];
-
-const STAGE_OPTIONS: { value: ClientStage; label: string }[] = [
-  { value: "BRIEF", label: "Бріф" },
-  { value: "ESTIMATE", label: "Кошторис" },
-  { value: "PAYMENT", label: "Оплата" },
-  { value: "WORK_STARTED", label: "Старт робіт" },
-  { value: "REPORT", label: "Звіт" },
-];
+const STATUS_VALUES: ClientStatus[] = ["NEW", "ACTIVE", "ATTENTION", "ARCHIVED"];
 
 const EMPTY_FORM = {
   name: "",
@@ -46,8 +35,18 @@ interface AddClientDrawerProps {
  * drawers feel like one system rather than two competing shapes.
  */
 export function AddClientDrawer({ open, isSubmitting, onSubmit, onClose }: AddClientDrawerProps) {
+  const { t } = useLocale();
   const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState<string | null>(null);
+
+  const statusOptions = useMemo(
+    () => STATUS_VALUES.map((value) => ({ value, label: t.clientStatus[value] })),
+    [t],
+  );
+  const stageOptions = useMemo(
+    () => CLIENT_STAGE_ORDER.map((value) => ({ value, label: t.clientStage[value] })),
+    [t],
+  );
 
   useEffect(() => {
     if (open) {
@@ -74,7 +73,7 @@ export function AddClientDrawer({ open, isSubmitting, onSubmit, onClose }: AddCl
         stage: form.stage,
       });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Не вдалося створити клієнта. Спробуйте ще раз.");
+      setError(err instanceof ApiError ? err.message : t.addClientDrawer.genericError);
     }
   }
 
@@ -85,15 +84,15 @@ export function AddClientDrawer({ open, isSubmitting, onSubmit, onClose }: AddCl
         <div className={styles.handle} />
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.header}>
-            <div className={styles.title}>Новий клієнт</div>
-            <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Закрити">
+            <div className={styles.title}>{t.addClientDrawer.title}</div>
+            <button type="button" className={styles.closeBtn} onClick={onClose} aria-label={t.addClientDrawer.close}>
               <CloseIcon width={14} height={14} />
             </button>
           </div>
 
           <div className={styles.body}>
             <label className={styles.field}>
-              <span>Назва клієнта *</span>
+              <span>{t.addClientDrawer.fields.name}</span>
               <input
                 type="text"
                 value={form.name}
@@ -104,7 +103,7 @@ export function AddClientDrawer({ open, isSubmitting, onSubmit, onClose }: AddCl
             </label>
 
             <label className={styles.field}>
-              <span>Ніша</span>
+              <span>{t.addClientDrawer.fields.niche}</span>
               <input
                 type="text"
                 value={form.niche}
@@ -114,12 +113,12 @@ export function AddClientDrawer({ open, isSubmitting, onSubmit, onClose }: AddCl
 
             <div className={styles.row}>
               <label className={styles.field}>
-                <span>Статус</span>
+                <span>{t.addClientDrawer.fields.status}</span>
                 <select
                   value={form.status}
                   onChange={(event) => setForm({ ...form, status: event.target.value as ClientStatus })}
                 >
-                  {STATUS_OPTIONS.map((option) => (
+                  {statusOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -128,12 +127,12 @@ export function AddClientDrawer({ open, isSubmitting, onSubmit, onClose }: AddCl
               </label>
 
               <label className={styles.field}>
-                <span>Етап співпраці</span>
+                <span>{t.addClientDrawer.fields.stage}</span>
                 <select
                   value={form.stage}
                   onChange={(event) => setForm({ ...form, stage: event.target.value as ClientStage })}
                 >
-                  {STAGE_OPTIONS.map((option) => (
+                  {stageOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -144,7 +143,7 @@ export function AddClientDrawer({ open, isSubmitting, onSubmit, onClose }: AddCl
 
             <div className={styles.row}>
               <label className={styles.field}>
-                <span>Тарифний план</span>
+                <span>{t.addClientDrawer.fields.tariffPlan}</span>
                 <input
                   type="text"
                   value={form.tariffPlan}
@@ -153,7 +152,7 @@ export function AddClientDrawer({ open, isSubmitting, onSubmit, onClose }: AddCl
               </label>
 
               <label className={styles.field}>
-                <span>Дохід/міс, ₴</span>
+                <span>{t.addClientDrawer.fields.revenue}</span>
                 <input
                   type="number"
                   min={0}
@@ -165,7 +164,7 @@ export function AddClientDrawer({ open, isSubmitting, onSubmit, onClose }: AddCl
             </div>
 
             <label className={styles.field}>
-              <span>Початок співпраці</span>
+              <span>{t.addClientDrawer.fields.startDate}</span>
               <input
                 type="date"
                 value={form.cooperationStartDate}
@@ -173,10 +172,10 @@ export function AddClientDrawer({ open, isSubmitting, onSubmit, onClose }: AddCl
               />
             </label>
 
-            <div className={styles.sectionTitle}>Контактна особа</div>
+            <div className={styles.sectionTitle}>{t.addClientDrawer.fields.contactSectionTitle}</div>
             <div className={styles.row}>
               <label className={styles.field}>
-                <span>Ім'я *</span>
+                <span>{t.addClientDrawer.fields.contactName}</span>
                 <input
                   type="text"
                   value={form.contactName}
@@ -186,7 +185,7 @@ export function AddClientDrawer({ open, isSubmitting, onSubmit, onClose }: AddCl
               </label>
 
               <label className={styles.field}>
-                <span>Роль</span>
+                <span>{t.addClientDrawer.fields.contactRole}</span>
                 <input
                   type="text"
                   value={form.contactRole}
@@ -197,7 +196,7 @@ export function AddClientDrawer({ open, isSubmitting, onSubmit, onClose }: AddCl
 
             <div className={styles.row}>
               <label className={styles.field}>
-                <span>Мобільний телефон *</span>
+                <span>{t.addClientDrawer.fields.contactPhone}</span>
                 <input
                   type="tel"
                   value={form.contactPhone}
@@ -207,7 +206,7 @@ export function AddClientDrawer({ open, isSubmitting, onSubmit, onClose }: AddCl
               </label>
 
               <label className={styles.field}>
-                <span>Email *</span>
+                <span>{t.addClientDrawer.fields.contactEmail}</span>
                 <input
                   type="email"
                   value={form.contactEmail}
@@ -222,7 +221,7 @@ export function AddClientDrawer({ open, isSubmitting, onSubmit, onClose }: AddCl
 
           <div className={styles.footer}>
             <button type="submit" className={styles.submit} disabled={isSubmitting}>
-              {isSubmitting ? "Створюємо..." : "Створити клієнта"}
+              {isSubmitting ? t.addClientDrawer.submitLoading : t.addClientDrawer.submitIdle}
             </button>
           </div>
         </form>

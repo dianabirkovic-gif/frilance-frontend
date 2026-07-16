@@ -1,0 +1,30 @@
+.button,
+.mobileButton {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-md);
+  background: var(--ink-800);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition:
+    background var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
+}
+
+.mobileButton {
+  width: 36px;
+  height: 36px;
+}
+
+.button:hover,
+.mobileButton:hover {
+  background: var(--ink-700);
+  color: var(--text-1);
+}

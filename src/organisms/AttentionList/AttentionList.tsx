@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Panel } from "../../molecules/Panel/Panel";
 import type { AttentionItem } from "../../api/dashboard";
+import { useLocale } from "../../i18n/useLocale";
 import styles from "./AttentionList.module.css";
 
 /**
@@ -9,16 +10,17 @@ import styles from "./AttentionList.module.css";
  * frontend CLAUDE.md "Responsive strategy" for why this isn't two components.
  */
 export function AttentionList({ items }: { items: AttentionItem[] }) {
+  const { t } = useLocale();
   return (
     <Panel className={styles.panel}>
       <div className={styles.head}>
-        <div className={styles.title}>Потребують уваги</div>
+        <div className={styles.title}>{t.attentionList.title}</div>
         <Link className={styles.link} to="/clients">
-          Усі →
+          {t.attentionList.allLink}
         </Link>
       </div>
       {items.length === 0 ? (
-        <div className={styles.empty}>Немає сигналів, що потребують уваги.</div>
+        <div className={styles.empty}>{t.attentionList.empty}</div>
       ) : (
         <div className={styles.row}>
           {items.map((item, index) => (

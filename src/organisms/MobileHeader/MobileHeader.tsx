@@ -1,6 +1,8 @@
 import { initials } from "../../utils/initials";
 import { BellIcon, ChevronDownIcon, SearchIcon } from "../../atoms/icons/icons";
+import { LocaleToggleButton } from "../../atoms/LocaleToggleButton/LocaleToggleButton";
 import { ThemeToggleButton } from "../../atoms/ThemeToggleButton/ThemeToggleButton";
+import { useLocale } from "../../i18n/useLocale";
 import styles from "./MobileHeader.module.css";
 
 interface MobileHeaderProps {
@@ -10,6 +12,7 @@ interface MobileHeaderProps {
 }
 
 export function MobileHeader({ title, greeting, userName }: MobileHeaderProps) {
+  const { t } = useLocale();
   return (
     <header className={styles.header}>
       <div className={styles.safeTop} />
@@ -22,11 +25,12 @@ export function MobileHeader({ title, greeting, userName }: MobileHeaderProps) {
           </div>
         </div>
         <div className={styles.actions}>
+          <LocaleToggleButton size="mobile" />
           <ThemeToggleButton size="mobile" />
-          <button className={styles.iconBtn} aria-label="Пошук">
+          <button className={styles.iconBtn} aria-label={t.mobileHeader.searchAriaLabel}>
             <SearchIcon width={16} height={16} />
           </button>
-          <button className={styles.iconBtn} aria-label="Сповіщення">
+          <button className={styles.iconBtn} aria-label={t.mobileHeader.notificationsAriaLabel}>
             <span className={styles.dot} />
             <BellIcon width={16} height={16} />
           </button>
@@ -35,7 +39,7 @@ export function MobileHeader({ title, greeting, userName }: MobileHeaderProps) {
       <div className={styles.wsChip}>
         <div className={styles.wsLeft}>
           <span className={styles.wsDot} />
-          Режим: Агентство
+          {t.workspace.modeLabel}: {t.workspace.value}
         </div>
         <ChevronDownIcon width={14} height={14} className={styles.wsCaret} />
       </div>

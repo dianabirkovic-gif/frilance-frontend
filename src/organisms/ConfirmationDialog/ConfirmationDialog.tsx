@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { useLocale } from "../../i18n/useLocale";
 import styles from "./ConfirmationDialog.module.css";
 
 interface ConfirmationDialogProps {
@@ -28,12 +29,16 @@ export function ConfirmationDialog({
   open,
   title,
   message,
-  confirmLabel = "Підтвердити",
-  cancelLabel = "Скасувати",
+  confirmLabel,
+  cancelLabel,
   isConfirming = false,
   onConfirm,
   onCancel,
 }: ConfirmationDialogProps) {
+  const { t } = useLocale();
+  const resolvedConfirmLabel = confirmLabel ?? t.confirmationDialog.confirmLabel;
+  const resolvedCancelLabel = cancelLabel ?? t.confirmationDialog.cancelLabel;
+
   return createPortal(
     <>
       <div className={open ? `${styles.backdrop} ${styles.open}` : styles.backdrop} onClick={onCancel} />
@@ -50,10 +55,10 @@ export function ConfirmationDialog({
         <div className={styles.message}>{message}</div>
         <div className={styles.actions}>
           <button type="button" className={styles.cancelBtn} onClick={onCancel} disabled={isConfirming}>
-            {cancelLabel}
+            {resolvedCancelLabel}
           </button>
           <button type="button" className={styles.confirmBtn} onClick={onConfirm} disabled={isConfirming}>
-            {isConfirming ? "Зачекайте..." : confirmLabel}
+            {isConfirming ? t.confirmationDialog.confirming : resolvedConfirmLabel}
           </button>
         </div>
       </div>

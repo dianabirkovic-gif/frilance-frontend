@@ -1,3 +1,4 @@
+import { useLocale } from "../../i18n/useLocale";
 import { AttentionList } from "../../organisms/AttentionList/AttentionList";
 import { ContentPlanStrip } from "../../organisms/ContentPlanStrip/ContentPlanStrip";
 import { EventLedger } from "../../organisms/EventLedger/EventLedger";
@@ -10,18 +11,22 @@ import { useDashboardOverview } from "./useDashboardOverview";
 
 export function DashboardPage() {
   const { data, isLoading, isError, error, refetch } = useDashboardOverview();
-  usePageHeader({ title: "Огляд", subtitle: data ? `${data.dateLabel} · ${data.greeting}` : "" });
+  const { t } = useLocale();
+  usePageHeader({ title: t.dashboardPage.title, subtitle: data ? `${data.dateLabel} · ${data.greeting}` : "" });
 
   if (isLoading) {
-    return <div className={styles.state}>Завантаження…</div>;
+    return <div className={styles.state}>{t.dashboardPage.loading}</div>;
   }
 
   if (isError || !data) {
     return (
       <div className={styles.state}>
-        <p>Не вдалося завантажити дані. {error instanceof Error ? error.message : ""}</p>
+        <p>
+          {t.dashboardPage.loadErrorPrefix}
+          {error instanceof Error ? error.message : ""}
+        </p>
         <button type="button" onClick={() => refetch()} className={styles.retry}>
-          Спробувати ще раз
+          {t.dashboardPage.retry}
         </button>
       </div>
     );

@@ -1,14 +1,9 @@
 import { Panel } from "../../molecules/Panel/Panel";
 import type { LedgerEntry } from "../../api/dashboard";
+import { useLocale } from "../../i18n/useLocale";
 import styles from "./EventLedger.module.css";
 
 const CURRENCY_FORMAT = new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 0, signDisplay: "always" });
-
-const TAG_LABEL: Record<LedgerEntry["tag"], string> = {
-  MONEY: "Фінанси",
-  CONTENT: "Контент",
-  CLIENT: "Клієнти",
-};
 
 function AmountCell({ entry }: { entry: LedgerEntry }) {
   if (entry.amount === null) return <span className={styles.amount}>—</span>;
@@ -22,27 +17,28 @@ function AmountCell({ entry }: { entry: LedgerEntry }) {
  * screens). One component, CSS decides which markup variant shows.
  */
 export function EventLedger({ entries }: { entries: LedgerEntry[] }) {
+  const { t } = useLocale();
   return (
     <Panel flush className={styles.panel}>
       <div className={styles.head}>
-        <div className={styles.title}>Реєстр подій</div>
+        <div className={styles.title}>{t.eventLedger.title}</div>
         <a className={styles.link} href="#">
-          Повний журнал →
+          {t.eventLedger.link}
         </a>
       </div>
 
       {entries.length === 0 ? (
-        <div className={styles.empty}>Ще немає подій.</div>
+        <div className={styles.empty}>{t.eventLedger.empty}</div>
       ) : (
         <>
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Час</th>
-                <th>Хто</th>
-                <th>Дія</th>
-                <th>Тип</th>
-                <th className={styles.amountHeader}>Сума</th>
+                <th>{t.eventLedger.headers.time}</th>
+                <th>{t.eventLedger.headers.who}</th>
+                <th>{t.eventLedger.headers.action}</th>
+                <th>{t.eventLedger.headers.type}</th>
+                <th className={styles.amountHeader}>{t.eventLedger.headers.amount}</th>
               </tr>
             </thead>
             <tbody>
@@ -56,7 +52,7 @@ export function EventLedger({ entries }: { entries: LedgerEntry[] }) {
                   <td>{entry.description}</td>
                   <td>
                     <span className={`${styles.tag} ${styles[entry.tag.toLowerCase()]}`}>
-                      {TAG_LABEL[entry.tag]}
+                      {t.eventLedger.tag[entry.tag]}
                     </span>
                   </td>
                   <td className={styles.amountCell}>
@@ -78,7 +74,7 @@ export function EventLedger({ entries }: { entries: LedgerEntry[] }) {
                   <div className={styles.mobileLine2}>
                     <span className={styles.time}>{entry.time}</span>
                     <span className={`${styles.tag} ${styles[entry.tag.toLowerCase()]}`}>
-                      {TAG_LABEL[entry.tag]}
+                      {t.eventLedger.tag[entry.tag]}
                     </span>
                   </div>
                 </div>

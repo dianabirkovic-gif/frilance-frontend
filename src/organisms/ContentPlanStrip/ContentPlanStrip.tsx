@@ -1,6 +1,7 @@
 import { Panel } from "../../molecules/Panel/Panel";
 import { Chip, type ChipTone } from "../../atoms/Chip/Chip";
 import type { ContentPlanDay, PostStatus } from "../../api/dashboard";
+import { useLocale } from "../../i18n/useLocale";
 import styles from "./ContentPlanStrip.module.css";
 
 const STATUS_TONE: Record<PostStatus, ChipTone> = {
@@ -11,13 +12,14 @@ const STATUS_TONE: Record<PostStatus, ChipTone> = {
 };
 
 export function ContentPlanStrip({ days }: { days: ContentPlanDay[] }) {
+  const { t } = useLocale();
   return (
     <Panel className={styles.panel}>
       <div className={styles.head}>
-        <div className={styles.title}>Контент-план · цей тиждень</div>
+        <div className={styles.title}>{t.contentPlanStrip.title}</div>
       </div>
       {days.length === 0 ? (
-        <div className={styles.empty}>На цей тиждень ще нічого не заплановано.</div>
+        <div className={styles.empty}>{t.contentPlanStrip.empty}</div>
       ) : (
         days.map((day, index) => (
           <div className={styles.row} key={index}>

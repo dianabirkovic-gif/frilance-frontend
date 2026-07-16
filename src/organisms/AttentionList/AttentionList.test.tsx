@@ -2,6 +2,8 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import type { AttentionItem } from "../../api/dashboard";
+import { LocaleProvider } from "../../i18n/LocaleProvider";
+import { uk } from "../../i18n/locales/uk";
 import { AttentionList } from "./AttentionList";
 
 const sample: AttentionItem = {
@@ -15,9 +17,11 @@ const sample: AttentionItem = {
 describe("AttentionList", () => {
   it("renders each item's title, subtitle and meta label", () => {
     render(
-      <MemoryRouter>
-        <AttentionList items={[sample]} />
-      </MemoryRouter>,
+      <LocaleProvider>
+        <MemoryRouter>
+          <AttentionList items={[sample]} />
+        </MemoryRouter>
+      </LocaleProvider>,
     );
 
     expect(screen.getByText(sample.title)).toBeInTheDocument();
@@ -27,21 +31,25 @@ describe("AttentionList", () => {
 
   it("shows an empty state instead of an empty panel when there is nothing to flag", () => {
     render(
-      <MemoryRouter>
-        <AttentionList items={[]} />
-      </MemoryRouter>,
+      <LocaleProvider>
+        <MemoryRouter>
+          <AttentionList items={[]} />
+        </MemoryRouter>
+      </LocaleProvider>,
     );
 
-    expect(screen.getByText(/Немає сигналів/)).toBeInTheDocument();
+    expect(screen.getByText(uk.attentionList.empty)).toBeInTheDocument();
   });
 
-  it("links \"Усі →\" to the Clients page", () => {
+  it("links the \"all\" link to the Clients page", () => {
     render(
-      <MemoryRouter>
-        <AttentionList items={[sample]} />
-      </MemoryRouter>,
+      <LocaleProvider>
+        <MemoryRouter>
+          <AttentionList items={[sample]} />
+        </MemoryRouter>
+      </LocaleProvider>,
     );
 
-    expect(screen.getByRole("link", { name: /Усі/ })).toHaveAttribute("href", "/clients");
+    expect(screen.getByRole("link", { name: uk.attentionList.allLink })).toHaveAttribute("href", "/clients");
   });
 });

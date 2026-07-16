@@ -1,23 +1,30 @@
 import { useMemo, useState } from "react";
 import { Panel } from "../../molecules/Panel/Panel";
 import type { Revenue } from "../../api/dashboard";
+import { interpolate } from "../../i18n/interpolate";
+import { useLocale } from "../../i18n/useLocale";
 import { buildAreaPath, buildSmoothLinePath, scaleToViewBox } from "./chartPath";
 import styles from "./RevenueHero.module.css";
 
 const CURRENCY_FORMAT = new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 0 });
-const MONTH_FORMAT = new Intl.DateTimeFormat("uk-UA", { month: "long" });
 const VIEW_WIDTH = 640;
 const VIEW_HEIGHT = 200;
 const BASELINE_Y = 150;
 
 type Range = "week" | "month" | "year";
 
-const RANGE_LABEL: Record<Range, string> = { week: "Тиждень", month: "Місяць", year: "Рік" };
+const RANGE_VALUES: Range[] = ["week", "month", "year"];
 
 export function RevenueHero({ revenue }: { revenue: Revenue }) {
+  const { locale, t } = useLocale();
   // Backend only serves the current month today (DashboardService.buildRevenue) —
   // this only switches the visual selection until the API accepts a range param.
   const [range, setRange] = useState<Range>("month");
+
+  const monthFormat = useMemo(
+    () => new Intl.DateTimeFormat(locale === "en" ? "en-US" : "uk-UA", { month: "long" }),
+    [locale],
+  );
 
   const points = useMemo(() => {
     const values = revenue.series.map((point) => point.cumulativeAmount);
@@ -33,7 +40,9 @@ export function RevenueHero({ revenue }: { revenue: Revenue }) {
     <Panel className={styles.panel}>
       <div className={styles.top}>
         <div>
-          <div className={styles.kicker}>Дохід агентства · {MONTH_FORMAT.format(new Date())}</div>
+          <div className={styles.kicker}>
+            {interpolate(t.revenueHero.kickerTemplate, { month: monthFormat.format(new Date()) })}
+          </div>
           <div className={styles.number}>
             ₴{CURRENCY_FORMAT.format(revenue.amount)}
             <span className={isPositive ? styles.delta : `${styles.delta} ${styles.deltaNegative}`}>
@@ -42,14 +51,14 @@ export function RevenueHero({ revenue }: { revenue: Revenue }) {
           </div>
         </div>
         <div className={styles.rangeTabs}>
-          {(Object.keys(RANGE_LABEL) as Range[]).map((key) => (
+          {RANGE_VALUES.map((key) => (
             <button
               key={key}
               type="button"
               className={key === range ? `${styles.rangeButton} ${styles.active}` : styles.rangeButton}
               onClick={() => setRange(key)}
             >
-              {RANGE_LABEL[key]}
+              {t.revenueHero.range[key]}
             </button>
           ))}
         </div>
@@ -79,7 +88,7 @@ export function RevenueHero({ revenue }: { revenue: Revenue }) {
             )}
           </svg>
         ) : (
-          <div className={styles.empty}>Ще немає доходів за цей місяць</div>
+          <div className={styles.empty}>{t.revenueHero.empty}</div>
         )}
       </div>
     </Panel>

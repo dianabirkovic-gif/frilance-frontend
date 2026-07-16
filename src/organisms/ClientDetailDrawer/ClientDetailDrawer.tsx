@@ -3,19 +3,14 @@ import type { ClientDetail } from "../../api/clients";
 import { ApiError } from "../../api/client";
 import { CloseIcon, LockIcon, MessageIcon, PhoneIcon } from "../../atoms/icons/icons";
 import { ConfirmationDialog } from "../ConfirmationDialog/ConfirmationDialog";
+import type { ClientDetailTab } from "../../i18n/dictionary";
+import { interpolate } from "../../i18n/interpolate";
+import { useLocale } from "../../i18n/useLocale";
 import { initials } from "../../utils/initials";
 import { CooperationTimeline } from "./CooperationTimeline";
 import styles from "./ClientDetailDrawer.module.css";
 
-type Tab = "overview" | "content" | "finance" | "files" | "notes";
-
-const TABS: { id: Tab; label: string }[] = [
-  { id: "overview", label: "Огляд" },
-  { id: "content", label: "Контент-план" },
-  { id: "finance", label: "Фінанси" },
-  { id: "files", label: "Файли" },
-  { id: "notes", label: "Нотатки" },
-];
+const TAB_ORDER: ClientDetailTab[] = ["overview", "content", "finance", "files", "notes"];
 
 const REVENUE_FORMAT = new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 0 });
 
@@ -31,9 +26,9 @@ interface ClientDetailDrawerProps {
 /**
  * Right-side drawer (desktop) / bottom sheet (mobile) — one markup, two
  * behaviors via CSS media query at 900px (DESIGN_SYSTEM.md §12). Only the
- * Огляд tab has real content; Контент-план/Фінанси/Файли/Нотатки stay the
+ * overview tab has real content; content/finance/files/notes stay the
  * mockup's own empty-state copy — FR-06's encrypted notes are explicitly
- * out of scope, so Нотатки never becomes more than the lock-note warning.
+ * out of scope, so notes never becomes more than the lock-note warning.
  */
 export function ClientDetailDrawer({
   open,
@@ -43,7 +38,8 @@ export function ClientDetailDrawer({
   onClose,
   onArchive,
 }: ClientDetailDrawerProps) {
-  const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const { t } = useLocale();
+  const [activeTab, setActiveTab] = useState<ClientDetailTab>("overview");
 
   useEffect(() => {
     if (open) {
@@ -57,7 +53,7 @@ export function ClientDetailDrawer({
       <div className={open ? `${styles.panel} ${styles.open}` : styles.panel}>
         <div className={styles.handle} />
         {isLoading || !detail ? (
-          <div className={styles.empty}>Завантаження…</div>
+          <div className={styles.empty}>{t.clientDetailDrawer.loading}</div>
         ) : (
           <ClientDetailContent
             detail={detail}
@@ -82,12 +78,13 @@ function ClientDetailContent({
   onArchive,
 }: {
   detail: ClientDetail;
-  activeTab: Tab;
+  activeTab: ClientDetailTab;
   isArchiving: boolean;
-  onSelectTab: (tab: Tab) => void;
+  onSelectTab: (tab: ClientDetailTab) => void;
   onClose: () => void;
   onArchive: (clientId: string) => Promise<unknown>;
 }) {
+  const { t } = useLocale();
   const subtitle = [detail.niche, detail.assigneeName].filter(Boolean).join(" · ");
   const isArchived = detail.status === "ARCHIVED";
   const [confirmArchiveOpen, setConfirmArchiveOpen] = useState(false);
@@ -98,7 +95,7 @@ function ClientDetailContent({
       setConfirmArchiveOpen(false);
     } catch (err) {
       setConfirmArchiveOpen(false);
-      window.alert(err instanceof ApiError ? err.message : "Не вдалося заархівувати клієнта. Спробуйте ще раз.");
+      window.alert(err instanceof ApiError ? err.message : t.clientDetailDrawer.archiveErrorFallback);
     }
   }
 
@@ -113,36 +110,36 @@ function ClientDetailContent({
               {subtitle && <div className={styles.niche}>{subtitle}</div>}
             </div>
           </div>
-          <button className={styles.closeBtn} onClick={onClose} aria-label="Закрити">
+          <button className={styles.closeBtn} onClick={onClose} aria-label={t.clientDetailDrawer.close}>
             <CloseIcon width={14} height={14} />
           </button>
         </div>
         <div className={styles.quickActions}>
-          <button className={`${styles.qaBtn} ${styles.primary}`} disabled title="Ще не реалізовано">
-            Написати
+          <button className={`${styles.qaBtn} ${styles.primary}`} disabled title={t.clientDetailDrawer.notImplemented}>
+            {t.clientDetailDrawer.writeAction}
           </button>
-          <button className={styles.qaBtn} disabled title="Ще не реалізовано">
-            Виставити рахунок
+          <button className={styles.qaBtn} disabled title={t.clientDetailDrawer.notImplemented}>
+            {t.clientDetailDrawer.invoiceAction}
           </button>
           <button
             className={styles.qaBtn}
             disabled={isArchived || isArchiving}
             onClick={() => setConfirmArchiveOpen(true)}
           >
-            {isArchived ? "Заархівовано" : isArchiving ? "Архівуємо..." : "Архівувати"}
+            {isArchived ? t.clientDetailDrawer.archiveDone : isArchiving ? t.clientDetailDrawer.archiving : t.clientDetailDrawer.archiveIdle}
           </button>
         </div>
       </div>
 
       <div className={styles.tabs}>
-        {TABS.map((tab) => (
+        {TAB_ORDER.map((tab) => (
           <div
-            key={tab.id}
-            className={tab.id === activeTab ? `${styles.tab} ${styles.active}` : styles.tab}
-            onClick={() => onSelectTab(tab.id)}
+            key={tab}
+            className={tab === activeTab ? `${styles.tab} ${styles.active}` : styles.tab}
+            onClick={() => onSelectTab(tab)}
           >
-            {tab.id === "notes" && <LockIcon width={12} height={12} />}
-            {tab.label}
+            {tab === "notes" && <LockIcon width={12} height={12} />}
+            {t.clientDetailDrawer.tabs[tab]}
           </div>
         ))}
       </div>
@@ -150,38 +147,35 @@ function ClientDetailContent({
       {activeTab === "overview" && <OverviewTab detail={detail} />}
       {activeTab === "content" && (
         <div className={styles.body}>
-          <div className={styles.empty}>
-            Контент-план клієнта відкриється тут — той самий календар, що й у модулі «Контент-план»,
-            відфільтрований по цьому клієнту.
-          </div>
+          <div className={styles.empty}>{t.clientDetailDrawer.contentEmpty}</div>
         </div>
       )}
       {activeTab === "finance" && (
         <div className={styles.body}>
-          <div className={styles.empty}>Історія оплат, рахунки та заборгованість клієнта.</div>
+          <div className={styles.empty}>{t.clientDetailDrawer.financeEmpty}</div>
         </div>
       )}
       {activeTab === "files" && (
         <div className={styles.body}>
-          <div className={styles.empty}>Брифи, контракти та матеріали клієнта.</div>
+          <div className={styles.empty}>{t.clientDetailDrawer.filesEmpty}</div>
         </div>
       )}
       {activeTab === "notes" && (
         <div className={styles.body}>
           <div className={styles.lockNote}>
             <LockIcon width={16} height={16} />
-            Захищена «База проєкту» — нотатки зашифровано на пристрої, доступ лише з паролем акаунта.
+            {t.clientDetailDrawer.notesLockNote}
           </div>
-          <div className={styles.empty}>Нотатки клієнта з'являться тут після розшифрування.</div>
+          <div className={styles.empty}>{t.clientDetailDrawer.notesEmpty}</div>
         </div>
       )}
 
       <ConfirmationDialog
         open={confirmArchiveOpen}
-        title="Архівувати клієнта"
-        message={`Заархівувати клієнта «${detail.name}»?`}
-        confirmLabel="Архівувати"
-        cancelLabel="Скасувати"
+        title={t.clientDetailDrawer.archiveConfirmTitle}
+        message={interpolate(t.clientDetailDrawer.archiveConfirmMessageTemplate, { name: detail.name })}
+        confirmLabel={t.clientDetailDrawer.archiveIdle}
+        cancelLabel={t.confirmationDialog.cancelLabel}
         isConfirming={isArchiving}
         onConfirm={handleConfirmArchive}
         onCancel={() => setConfirmArchiveOpen(false)}
@@ -191,29 +185,30 @@ function ClientDetailContent({
 }
 
 function OverviewTab({ detail }: { detail: ClientDetail }) {
+  const { t } = useLocale();
   return (
     <div className={styles.body}>
-      <div className={styles.sectionTitle}>Етап співпраці</div>
+      <div className={styles.sectionTitle}>{t.clientDetailDrawer.sectionStage}</div>
       <div className={styles.timeline}>
         <CooperationTimeline stage={detail.stage} status={detail.status} />
       </div>
 
       <div className={styles.stats}>
         <div className={styles.stat}>
-          <div className={styles.statLabel}>Дохід із клієнта</div>
+          <div className={styles.statLabel}>{t.clientDetailDrawer.statRevenueLabel}</div>
           <div className={styles.statValue}>
             {detail.monthlyRevenue === null ? "—" : `₴${REVENUE_FORMAT.format(detail.monthlyRevenue)}`}
           </div>
         </div>
         <div className={styles.stat}>
-          <div className={styles.statLabel}>У співпраці</div>
+          <div className={styles.statLabel}>{t.clientDetailDrawer.statDurationLabel}</div>
           <div className={styles.statValue}>{detail.cooperationDurationLabel}</div>
         </div>
       </div>
 
       {detail.contactName && (
         <>
-          <div className={styles.sectionTitle}>Контактна особа</div>
+          <div className={styles.sectionTitle}>{t.clientDetailDrawer.sectionContact}</div>
           <div className={styles.contact}>
             <div className={styles.contactAvatar}>{initials(detail.contactName)}</div>
             <div>
@@ -226,10 +221,10 @@ function OverviewTab({ detail }: { detail: ClientDetail }) {
               )}
             </div>
             <div className={styles.contactActions}>
-              <button disabled title="Ще не реалізовано" aria-label="Подзвонити">
+              <button disabled title={t.clientDetailDrawer.notImplemented} aria-label={t.clientDetailDrawer.callAriaLabel}>
                 <PhoneIcon width={13} height={13} />
               </button>
-              <button disabled title="Ще не реалізовано" aria-label="Написати повідомлення">
+              <button disabled title={t.clientDetailDrawer.notImplemented} aria-label={t.clientDetailDrawer.messageAriaLabel}>
                 <MessageIcon width={13} height={13} />
               </button>
             </div>
@@ -237,9 +232,9 @@ function OverviewTab({ detail }: { detail: ClientDetail }) {
         </>
       )}
 
-      <div className={styles.sectionTitle}>Останні події</div>
+      <div className={styles.sectionTitle}>{t.clientDetailDrawer.sectionActivity}</div>
       {detail.activity.length === 0 ? (
-        <div className={styles.empty}>Ще немає подій.</div>
+        <div className={styles.empty}>{t.clientDetailDrawer.activityEmpty}</div>
       ) : (
         detail.activity.map((entry, index) => (
           <div className={styles.activityRow} key={index}>

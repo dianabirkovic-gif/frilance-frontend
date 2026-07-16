@@ -1,4 +1,5 @@
 import type { ComponentType, SVGProps } from "react";
+import type { NavGroupKey, NavItemKey } from "../../i18n/dictionary";
 import {
   AnalyticsIcon,
   ClientsIcon,
@@ -11,7 +12,7 @@ import {
 } from "../../atoms/icons/icons";
 
 export interface NavItem {
-  label: string;
+  labelKey: NavItemKey;
   icon: ComponentType<SVGProps<SVGSVGElement>>;
   /** Omitted for modules not built yet (see backend/frontend CLAUDE.md) — rendered as a disabled item. */
   path?: string;
@@ -20,36 +21,36 @@ export interface NavItem {
 }
 
 export interface NavGroup {
-  label: string;
+  labelKey: NavGroupKey;
   items: NavItem[];
 }
 
 /**
- * Only "Огляд" has a `path` today. Add a `path` here the same release you
+ * Only "overview" has a `path` today. Add a `path` here the same release you
  * add the route in router.tsx — see frontend CLAUDE.md "Adding a new module".
  */
 export const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Робота",
+    labelKey: "work",
     items: [
-      { label: "Огляд", icon: OverviewIcon, path: "/" },
-      { label: "Клієнти", icon: ClientsIcon, path: "/clients" },
-      { label: "Контент-план", icon: ContentIcon },
-      { label: "Таргет", icon: TargetIcon },
+      { labelKey: "overview", icon: OverviewIcon, path: "/" },
+      { labelKey: "clients", icon: ClientsIcon, path: "/clients" },
+      { labelKey: "content", icon: ContentIcon },
+      { labelKey: "target", icon: TargetIcon },
     ],
   },
   {
-    label: "Бізнес",
+    labelKey: "business",
     items: [
-      { label: "Фінанси", icon: FinanceIcon },
-      { label: "Звіти та інвойси", icon: ReportsIcon },
-      { label: "Аналітика", icon: AnalyticsIcon },
-      { label: "Команда", icon: TeamIcon },
+      { labelKey: "finance", icon: FinanceIcon },
+      { labelKey: "reports", icon: ReportsIcon },
+      { labelKey: "analytics", icon: AnalyticsIcon },
+      { labelKey: "team", icon: TeamIcon },
     ],
   },
 ];
 
 export const MOBILE_TAB_ITEMS: NavItem[] = [
-  { label: "Огляд", icon: OverviewIcon, path: "/" },
-  { label: "Клієнти", icon: ClientsIcon, path: "/clients" },
+  { labelKey: "overview", icon: OverviewIcon, path: "/" },
+  { labelKey: "clients", icon: ClientsIcon, path: "/clients" },
 ];
