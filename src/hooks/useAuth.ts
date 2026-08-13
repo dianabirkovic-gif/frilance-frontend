@@ -1,40 +1,15 @@
-import { useCallback, useState } from "react";
-import * as authApi from "../api/auth";
-import {
-  getStoredAccessToken,
-  getStoredUser,
-  setStoredAccessToken,
-  setStoredUser,
-  type StoredUser,
-} from "../api/client";
+import { useContext } from "react";
+import { AuthContext } from "./AuthProvider";
 
 /**
- * Deliberately minimal: token + user profile in localStorage, no refresh
- * flow (matches the backend's single-access-token simplification — see
- * backend CLAUDE.md). Replace with a context if more than one component
- * needs to react to login/logout; for now AppShell/RequireAuth are the only
- * consumers.
+ * Session, profile and section grants — see `AuthProvider` for why this is a
+ * context now rather than the per-component state it used to be. Mirrors
+ * `useLocale`/`useTheme`: throws outside its provider.
  */
 export function useAuth() {
-  const [accessToken, setAccessToken] = useState<string | null>(getStoredAccessToken);
-  const [user, setUser] = useState<StoredUser | null>(getStoredUser);
-
-  const login = useCallback(async (email: string, password: string) => {
-    const response = await authApi.login({ email, password });
-    const storedUser: StoredUser = { fullName: response.fullName, role: response.role };
-    setStoredAccessToken(response.accessToken);
-    setStoredUser(storedUser);
-    setAccessToken(response.accessToken);
-    setUser(storedUser);
-    return response;
-  }, []);
-
-  const logout = useCallback(() => {
-    setStoredAccessToken(null);
-    setStoredUser(null);
-    setAccessToken(null);
-    setUser(null);
-  }, []);
-
-  return { accessToken, user, isAuthenticated: accessToken !== null, login, logout };
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
 }

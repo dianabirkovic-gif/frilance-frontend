@@ -1,4 +1,6 @@
+import { useMemo } from "react";
 import { Outlet } from "react-router-dom";
+import { visibleMobileTabItems, visibleNavGroups } from "../../config/navItems/navItems";
 import { useAuth } from "../../hooks/useAuth";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { MobileHeader } from "../../organisms/MobileHeader/MobileHeader";
@@ -31,15 +33,20 @@ export function AppShell() {
 
 function AppShellChrome() {
   const isDesktop = useMediaQuery(`(min-width: 900px)`);
-  const { user } = useAuth();
+  const { user, canView } = useAuth();
   const { title, subtitle } = useCurrentPageHeader();
   const userName = user?.fullName ?? "";
   const userRole = user?.role ?? "FREELANCER";
 
+  // The one place the nav is filtered by the owner's grants; both shells render
+  // from the same result (see `visibleNavGroups`).
+  const navGroups = useMemo(() => visibleNavGroups(canView), [canView]);
+  const tabItems = useMemo(() => visibleMobileTabItems(canView), [canView]);
+
   if (isDesktop) {
     return (
       <div className={styles.desktopShell}>
-        <Sidebar userName={userName} userRole={userRole} />
+        <Sidebar userName={userName} userRole={userRole} navGroups={navGroups} />
         <div className={styles.main}>
           <Topbar title={title} subtitle={subtitle} />
           <div className={styles.content}>
@@ -56,7 +63,7 @@ function AppShellChrome() {
       <main className={styles.mobileContent}>
         <Outlet />
       </main>
-      <MobileTabBar />
+      <MobileTabBar navGroups={navGroups} tabItems={tabItems} canViewFinance={canView("FINANCE")} />
     </div>
   );
 }

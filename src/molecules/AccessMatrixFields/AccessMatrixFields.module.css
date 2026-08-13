@@ -1,0 +1,47 @@
+.rows {
+  background: var(--ink-800);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 4px 14px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12.5px;
+  color: var(--text-1);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.section {
+  flex: 1;
+  min-width: 0;
+}
+
+.select {
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--text-1);
+  background: var(--ink-900);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 6px 8px;
+  min-width: 116px;
+}
+
+.select:focus {
+  outline: 2px solid var(--brand-400);
+  outline-offset: -1px;
+}
+
+.select:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

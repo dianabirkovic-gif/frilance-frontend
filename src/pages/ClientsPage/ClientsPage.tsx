@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import type { ClientListItem, ClientStatus, CreateClientPayload } from "../../api/clients";
 import { PlusIcon } from "../../atoms/icons/icons";
+import { useAuth } from "../../hooks/useAuth";
 import type { FilterId } from "../../i18n/dictionary";
 import { interpolate } from "../../i18n/interpolate";
 import { useLocale } from "../../i18n/useLocale";
@@ -29,6 +30,9 @@ function countFor(clients: ClientListItem[], status: ClientStatus | null): numbe
 export function ClientsPage() {
   const { data, isLoading, isError, error, refetch } = useClients();
   const { t } = useLocale();
+  // READ opens this page but not its writes — the backend rejects them either
+  // way (ClientService), this just doesn't offer buttons that would only 403.
+  const canEditClients = useAuth().canEdit("CLIENTS");
   const [activeFilter, setActiveFilter] = useState<FilterId>("all");
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
@@ -48,7 +52,7 @@ export function ClientsPage() {
   });
 
   const openAddClient = useCallback(() => setIsAddClientOpen(true), []);
-  usePageFab({ label: t.clientsPage.newClientButton, onClick: openAddClient });
+  usePageFab(canEditClients ? { label: t.clientsPage.newClientButton, onClick: openAddClient } : null);
 
   async function handleCreateClient(payload: CreateClientPayload) {
     await createClient.mutateAsync(payload);
@@ -94,10 +98,12 @@ export function ClientsPage() {
           ))}
         </div>
         <div className={styles.spacer} />
-        <button type="button" className={styles.newClientBtn} onClick={openAddClient}>
-          <PlusIcon width={15} height={15} />
-          {t.clientsPage.newClientButton}
-        </button>
+        {canEditClients && (
+          <button type="button" className={styles.newClientBtn} onClick={openAddClient}>
+            <PlusIcon width={15} height={15} />
+            {t.clientsPage.newClientButton}
+          </button>
+        )}
       </div>
 
       <ClientTable clients={filteredClients} onSelectClient={setSelectedClientId} />
@@ -107,16 +113,19 @@ export function ClientsPage() {
         detail={clientDetail.data}
         isLoading={clientDetail.isLoading}
         isArchiving={archiveClient.isPending}
+        canEdit={canEditClients}
         onClose={() => setSelectedClientId(null)}
         onArchive={(clientId) => archiveClient.mutateAsync(clientId)}
       />
 
-      <AddClientDrawer
-        open={isAddClientOpen}
-        isSubmitting={createClient.isPending}
-        onSubmit={handleCreateClient}
-        onClose={() => setIsAddClientOpen(false)}
-      />
+      {canEditClients && (
+        <AddClientDrawer
+          open={isAddClientOpen}
+          isSubmitting={createClient.isPending}
+          onSubmit={handleCreateClient}
+          onClose={() => setIsAddClientOpen(false)}
+        />
+      )}
     </div>
   );
 }

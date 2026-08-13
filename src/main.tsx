@@ -3,6 +3,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import { queryClient } from "./api/queryClient";
+import { AuthProvider } from "./hooks/AuthProvider";
 import { LocaleProvider } from "./i18n/LocaleProvider";
 import { router } from "./router";
 import { ThemeProvider } from "./theme/ThemeProvider";
@@ -14,7 +15,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <LocaleProvider>
-          <RouterProvider router={router} />
+          <AuthProvider>
+            <RouterProvider router={router} />
+          </AuthProvider>
         </LocaleProvider>
       </ThemeProvider>
     </QueryClientProvider>

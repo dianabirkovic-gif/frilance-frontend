@@ -19,6 +19,8 @@ interface ClientDetailDrawerProps {
   detail: ClientDetail | undefined;
   isLoading: boolean;
   isArchiving: boolean;
+  /** False under a READ grant on Clients — the archive action is hidden rather than offered and 403'd. */
+  canEdit: boolean;
   onClose: () => void;
   onArchive: (clientId: string) => Promise<unknown>;
 }
@@ -35,6 +37,7 @@ export function ClientDetailDrawer({
   detail,
   isLoading,
   isArchiving,
+  canEdit,
   onClose,
   onArchive,
 }: ClientDetailDrawerProps) {
@@ -59,6 +62,7 @@ export function ClientDetailDrawer({
             detail={detail}
             activeTab={activeTab}
             isArchiving={isArchiving}
+            canEdit={canEdit}
             onSelectTab={setActiveTab}
             onClose={onClose}
             onArchive={onArchive}
@@ -73,6 +77,7 @@ function ClientDetailContent({
   detail,
   activeTab,
   isArchiving,
+  canEdit,
   onSelectTab,
   onClose,
   onArchive,
@@ -80,6 +85,7 @@ function ClientDetailContent({
   detail: ClientDetail;
   activeTab: ClientDetailTab;
   isArchiving: boolean;
+  canEdit: boolean;
   onSelectTab: (tab: ClientDetailTab) => void;
   onClose: () => void;
   onArchive: (clientId: string) => Promise<unknown>;
@@ -121,13 +127,15 @@ function ClientDetailContent({
           <button className={styles.qaBtn} disabled title={t.clientDetailDrawer.notImplemented}>
             {t.clientDetailDrawer.invoiceAction}
           </button>
-          <button
-            className={styles.qaBtn}
-            disabled={isArchived || isArchiving}
-            onClick={() => setConfirmArchiveOpen(true)}
-          >
-            {isArchived ? t.clientDetailDrawer.archiveDone : isArchiving ? t.clientDetailDrawer.archiving : t.clientDetailDrawer.archiveIdle}
-          </button>
+          {canEdit && (
+            <button
+              className={styles.qaBtn}
+              disabled={isArchived || isArchiving}
+              onClick={() => setConfirmArchiveOpen(true)}
+            >
+              {isArchived ? t.clientDetailDrawer.archiveDone : isArchiving ? t.clientDetailDrawer.archiving : t.clientDetailDrawer.archiveIdle}
+            </button>
+          )}
         </div>
       </div>
 

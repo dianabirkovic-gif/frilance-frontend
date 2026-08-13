@@ -1,4 +1,4 @@
-import type { Role } from "./auth";
+import type { AccessMatrix, Role } from "./auth";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const TOKEN_STORAGE_KEY = "frilanceos.accessToken";
@@ -7,6 +7,7 @@ const USER_STORAGE_KEY = "frilanceos.user";
 export interface StoredUser {
   fullName: string;
   role: Role;
+  access: AccessMatrix;
 }
 
 export function getStoredAccessToken(): string | null {
@@ -21,9 +22,18 @@ export function setStoredAccessToken(token: string | null): void {
   }
 }
 
+/**
+ * A user stored before section grants existed has no `access` and nothing
+ * sensible to fall back on — treating a missing matrix as "everything" would
+ * flash tabs the member can't open, as "nothing" would flash an empty nav.
+ * Discarding it lets `AuthProvider`'s `/auth/me` refresh fill it in from the
+ * backend instead.
+ */
 export function getStoredUser(): StoredUser | null {
   const raw = window.localStorage.getItem(USER_STORAGE_KEY);
-  return raw ? (JSON.parse(raw) as StoredUser) : null;
+  if (!raw) return null;
+  const parsed = JSON.parse(raw) as StoredUser;
+  return parsed.access ? parsed : null;
 }
 
 export function setStoredUser(user: StoredUser | null): void {

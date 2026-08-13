@@ -14,6 +14,16 @@ export const uk: Dictionary = {
     submitLoading: "Входимо...",
     genericError: "Не вдалося увійти. Спробуйте ще раз.",
   },
+  claimInvitePage: {
+    intro:
+      "Вас запросили до команди. Введіть email, на який надійшло запрошення, код запрошення від власниці, і створіть пароль.",
+    email: "Email",
+    token: "Код запрошення",
+    password: "Пароль",
+    submitIdle: "Активувати акаунт",
+    submitLoading: "Активуємо...",
+    genericError: "Не вдалося активувати запрошення. Перевірте дані і спробуйте ще раз.",
+  },
   dashboardPage: {
     title: "Огляд",
     loading: "Завантаження…",
@@ -34,6 +44,64 @@ export const uk: Dictionary = {
     },
     subtitleTemplate: "{count} клієнтів · {attentionCount} потребують уваги",
   },
+  teamPage: {
+    title: "Команда",
+    loading: "Завантаження…",
+    loadErrorPrefix: "Не вдалося завантажити дані. ",
+    retry: "Спробувати ще раз",
+    inviteButton: "Запросити учасника",
+    subtitleTemplate: "{count} учасників",
+  },
+  teamTable: {
+    empty: "У команді ще немає учасників.",
+    headers: {
+      member: "Учасник",
+      role: "Роль",
+      load: "Завантаженість",
+      clients: "Клієнтів",
+      status: "Статус",
+    },
+    status: {
+      ACTIVE: "Активна",
+      INVITED: "Запрошено",
+    },
+    accessColumn: "Доступ",
+    editAccessAction: "Змінити доступ",
+    revokeAction: "Скасувати запрошення",
+    revokeConfirmTitle: "Скасувати запрошення",
+    revokeConfirmMessageTemplate:
+      "Скасувати запрошення для «{name}»? Обліковий запис буде видалено, і його можна буде запросити знову.",
+    revokeErrorFallback: "Не вдалося скасувати запрошення. Спробуйте ще раз.",
+  },
+  editMemberAccessDrawer: {
+    titleTemplate: "Доступ: {name}",
+    close: "Закрити",
+    intro: "Оберіть, що учасник може бачити та змінювати. Зміни діють одразу.",
+    genericError: "Не вдалося змінити доступ. Спробуйте ще раз.",
+    submitIdle: "Зберегти доступ",
+    submitLoading: "Зберігаємо...",
+  },
+  inviteTeamMemberDrawer: {
+    title: "Запросити учасника",
+    close: "Закрити",
+    genericError: "Не вдалося запросити учасника. Спробуйте ще раз.",
+    submitIdle: "Надіслати запрошення",
+    submitLoading: "Запрошуємо...",
+    fields: {
+      fullName: "Ім'я *",
+      email: "Email *",
+      role: "Роль",
+    },
+    accessTitle: "Доступ до розділів",
+    accessNote: "Роль лише підставляє початкові значення — доступ визначає те, що ви оберете тут.",
+    successTitle: "Запрошення створено",
+    successIntroTemplate:
+      "Надішліть це посилання «{name}» особисто (наприклад, у Slack) — email саму систему не надсилає. Посилання працює лише один раз.",
+    linkLabel: "Посилання для активації",
+    copyButton: "Копіювати",
+    copiedButton: "Скопійовано",
+    doneButton: "Готово",
+  },
   clientStatus: {
     NEW: "Новий",
     ACTIVE: "Активний",
@@ -53,6 +121,18 @@ export const uk: Dictionary = {
     SMM: "SMM-спеціаліст",
     TARGETOLOGIST: "Таргетолог",
     FREELANCER: "Фрілансер",
+  },
+  appSection: {
+    CLIENTS: "Клієнти",
+    CONTENT: "Контент-план",
+    TARGET: "Таргет",
+    FINANCE: "Фінанси",
+    ANALYTICS: "Аналітика",
+  },
+  accessLevel: {
+    NONE: "Немає",
+    READ: "Перегляд",
+    FULL: "Повний",
   },
   chip: {
     tone: {

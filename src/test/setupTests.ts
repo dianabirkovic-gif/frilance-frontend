@@ -22,3 +22,17 @@ if (typeof window !== "undefined" && !window.localStorage) {
   };
   Object.defineProperty(window, "localStorage", { value: memoryStorage, configurable: true });
 }
+
+// jsdom doesn't implement ResizeObserver — needed by MobileTabBar (measures
+// .tabbar's height to position its portalled "more" menu). A no-op stub is
+// enough for tests: they only render/click, they don't assert on layout
+// values derived from a real resize.
+if (typeof window !== "undefined" && !window.ResizeObserver) {
+  class ResizeObserverStub {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  Object.defineProperty(window, "ResizeObserver", { value: ResizeObserverStub, configurable: true });
+  Object.defineProperty(globalThis, "ResizeObserver", { value: ResizeObserverStub, configurable: true });
+}

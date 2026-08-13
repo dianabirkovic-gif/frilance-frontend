@@ -221,9 +221,23 @@ match this repo's anti-overengineering stance).
 
 ## Auth
 
-- `hooks/useAuth.ts` holds the access token in `localStorage` (mirrors the
-  backend's single-token simplification — see backend CLAUDE.md). No
-  refresh flow. `guards/RequireAuth/RequireAuth.tsx` redirects to `/login` when
+- `hooks/AuthProvider.tsx` holds the session — access token, profile and the
+  member's section grants — in `localStorage` behind a context, with
+  `hooks/useAuth.ts` as the accessor (same provider+hook shape as
+  `LocaleProvider`/`useLocale`). It was per-component state until grants
+  arrived; the nav, route guards and page actions all read the same matrix
+  and it can change mid-session, so one shared copy is the point. No refresh
+  flow (mirrors the backend's single-token simplification — see backend
+  CLAUDE.md).
+- **Access-gated UI**: `useAuth().canView(section)`/`canEdit(section)` decide
+  whether a nav item renders (`visibleNavGroups`), whether a route is
+  reachable (`guards/RequireSection`), and whether create/update controls
+  appear. All of it is cosmetic — the backend re-checks every call, so hiding
+  a button is a courtesy, never the enforcement. Grants can go stale (the
+  owner may change them mid-session), which is why `AuthProvider` re-reads
+  `GET /auth/me` on load; don't add a UI-only rule that has no server-side
+  counterpart.
+- `guards/RequireAuth/RequireAuth.tsx` redirects to `/login` when
   there's no token; it does not verify the token is still valid (an expired
   token will fail the first API call and the user sees the error state, not
   an automatic redirect) — wire that up together with refresh-token support

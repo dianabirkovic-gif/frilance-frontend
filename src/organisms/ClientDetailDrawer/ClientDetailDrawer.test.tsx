@@ -31,6 +31,7 @@ describe("ClientDetailDrawer", () => {
           detail={sample}
           isLoading={false}
           isArchiving={false}
+          canEdit
           onClose={vi.fn()}
           onArchive={vi.fn()}
         />
@@ -53,6 +54,7 @@ describe("ClientDetailDrawer", () => {
           detail={{ ...sample, activity: [] }}
           isLoading={false}
           isArchiving={false}
+          canEdit
           onClose={vi.fn()}
           onArchive={vi.fn()}
         />
@@ -70,6 +72,7 @@ describe("ClientDetailDrawer", () => {
           detail={undefined}
           isLoading
           isArchiving={false}
+          canEdit
           onClose={vi.fn()}
           onArchive={vi.fn()}
         />
@@ -88,6 +91,7 @@ describe("ClientDetailDrawer", () => {
           detail={sample}
           isLoading={false}
           isArchiving={false}
+          canEdit
           onClose={vi.fn()}
           onArchive={onArchive}
         />
@@ -115,6 +119,7 @@ describe("ClientDetailDrawer", () => {
           detail={sample}
           isLoading={false}
           isArchiving={false}
+          canEdit
           onClose={vi.fn()}
           onArchive={onArchive}
         />
@@ -136,6 +141,7 @@ describe("ClientDetailDrawer", () => {
           detail={{ ...sample, status: "ARCHIVED" }}
           isLoading={false}
           isArchiving={false}
+          canEdit
           onClose={vi.fn()}
           onArchive={vi.fn()}
         />
@@ -143,5 +149,25 @@ describe("ClientDetailDrawer", () => {
     );
 
     expect(screen.getByRole("button", { name: uk.clientDetailDrawer.archiveDone })).toBeDisabled();
+  });
+
+  it("hides the archive action entirely under a read-only Clients grant", () => {
+    render(
+      <LocaleProvider>
+        <ClientDetailDrawer
+          open
+          detail={sample}
+          isLoading={false}
+          isArchiving={false}
+          canEdit={false}
+          onClose={vi.fn()}
+          onArchive={vi.fn()}
+        />
+      </LocaleProvider>,
+    );
+
+    // The card itself still reads normally — READ opens it, it just can't change it.
+    expect(screen.getByText("MUSE'23")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: uk.clientDetailDrawer.archiveIdle })).not.toBeInTheDocument();
   });
 });

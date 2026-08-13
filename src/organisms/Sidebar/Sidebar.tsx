@@ -1,15 +1,18 @@
 import { NavLink } from "react-router-dom";
+import type { NavGroup } from "../../config/navItems/navItems";
 import type { Role } from "../../api/auth";
 import { initials } from "../../utils/initials";
 import { ChevronDownIcon } from "../../atoms/icons/icons";
 import { BRAND_NAME } from "../../config/brand";
-import { NAV_GROUPS, type NavItem } from "../../config/navItems/navItems";
+import { type NavItem } from "../../config/navItems/navItems";
 import { useLocale } from "../../i18n/useLocale";
 import styles from "./Sidebar.module.css";
 
 interface SidebarProps {
   userName: string;
   userRole: Role;
+  /** Already filtered to what this member may open — see `visibleNavGroups`. */
+  navGroups: NavGroup[];
 }
 
 function NavBadge({ item }: { item: NavItem }) {
@@ -19,7 +22,7 @@ function NavBadge({ item }: { item: NavItem }) {
   );
 }
 
-export function Sidebar({ userName, userRole }: SidebarProps) {
+export function Sidebar({ userName, userRole, navGroups }: SidebarProps) {
   const { t } = useLocale();
 
   return (
@@ -40,7 +43,7 @@ export function Sidebar({ userName, userRole }: SidebarProps) {
         <ChevronDownIcon width={14} height={14} />
       </div>
 
-      {NAV_GROUPS.map((group) => (
+      {navGroups.map((group) => (
         <nav className={styles.navGroup} key={group.labelKey}>
           <div className={styles.navGroupLabel}>{t.nav.groups[group.labelKey]}</div>
           {group.items.map((item) =>

@@ -1,6 +1,7 @@
-import type { Role } from "../api/auth";
+import type { AccessLevel, AppSection, Role } from "../api/auth";
 import type { ClientStage, ClientStatus } from "../api/clients";
 import type { EventTag } from "../api/dashboard";
+import type { TeamMemberStatus } from "../api/team";
 import type { ChipTone } from "../atoms/Chip/Chip";
 
 export type NavGroupKey = "work" | "business";
@@ -29,6 +30,15 @@ export interface Dictionary {
     submitLoading: string;
     genericError: string;
   };
+  claimInvitePage: {
+    intro: string;
+    email: string;
+    token: string;
+    password: string;
+    submitIdle: string;
+    submitLoading: string;
+    genericError: string;
+  };
   dashboardPage: {
     title: string;
     loading: string;
@@ -44,9 +54,64 @@ export interface Dictionary {
     filters: Record<FilterId, string>;
     subtitleTemplate: string;
   };
+  teamPage: {
+    title: string;
+    loading: string;
+    loadErrorPrefix: string;
+    retry: string;
+    inviteButton: string;
+    subtitleTemplate: string;
+  };
+  teamTable: {
+    empty: string;
+    headers: {
+      member: string;
+      role: string;
+      load: string;
+      clients: string;
+      status: string;
+    };
+    status: Record<TeamMemberStatus, string>;
+    accessColumn: string;
+    editAccessAction: string;
+    revokeAction: string;
+    revokeConfirmTitle: string;
+    revokeConfirmMessageTemplate: string;
+    revokeErrorFallback: string;
+  };
+  editMemberAccessDrawer: {
+    titleTemplate: string;
+    close: string;
+    intro: string;
+    genericError: string;
+    submitIdle: string;
+    submitLoading: string;
+  };
+  inviteTeamMemberDrawer: {
+    title: string;
+    close: string;
+    genericError: string;
+    submitIdle: string;
+    submitLoading: string;
+    fields: {
+      fullName: string;
+      email: string;
+      role: string;
+    };
+    accessTitle: string;
+    accessNote: string;
+    successTitle: string;
+    successIntroTemplate: string;
+    linkLabel: string;
+    copyButton: string;
+    copiedButton: string;
+    doneButton: string;
+  };
   clientStatus: Record<ClientStatus, string>;
   clientStage: Record<ClientStage, string>;
   role: Record<Role, string>;
+  appSection: Record<AppSection, string>;
+  accessLevel: Record<AccessLevel, string>;
   chip: {
     tone: Record<ChipTone, string>;
   };

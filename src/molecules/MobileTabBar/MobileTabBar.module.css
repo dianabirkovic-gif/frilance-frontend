@@ -64,3 +64,82 @@
   margin-top: -22px;
   box-shadow: var(--sh-fab);
 }
+
+.moreBackdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim);
+  backdrop-filter: blur(6px);
+  z-index: 19;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-standard);
+}
+
+.moreBackdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Mirrors .tabbar's own centering (same 430px column) since it's portalled outside .tabbar's coordinate space. */
+.moreMenuColumn {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  z-index: 21;
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 6px 8px;
+  pointer-events: none;
+}
+
+.moreMenu {
+  min-width: 200px;
+  background: var(--ink-900);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-lg);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px) scale(0.98);
+  transition:
+    opacity var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard);
+}
+
+.moreMenu.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.moreMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.moreMenuItem svg {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.moreMenuItem.active {
+  background: var(--brand-50);
+  color: var(--text-1);
+}
+
+.moreMenuItem.disabled {
+  opacity: 0.5;
+}
