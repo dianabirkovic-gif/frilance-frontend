@@ -1,13 +1,23 @@
 import { apiRequest } from "./client";
 
 /** Mirrors DashboardOverviewResponse and its nested records on the backend exactly — keep in sync. */
+/**
+ * Every panel is gated on the section it draws from, server-side — a member
+ * without the grant gets the panel absent rather than a 403 for the whole
+ * screen. Absent is `null` for `revenue` and an empty array for the lists,
+ * so each panel renders its own "no access"/empty state.
+ */
 export interface DashboardOverview {
   dateLabel: string;
   greeting: string;
-  revenue: Revenue;
+  /** Null without the Finance grant. */
+  revenue: Revenue | null;
+  /** Empty without the Clients grant. */
   attentionItems: AttentionItem[];
+  /** Empty without the Content grant. */
   contentPlanWeek: ContentPlanDay[];
   financeSummary: FinanceSummary;
+  /** Empty for non-owners — the roster is owner-only. */
   teamWorkload: TeamMember[];
   eventLedger: LedgerEntry[];
 }

@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
 import { RequireAuth } from "./guards/RequireAuth/RequireAuth";
+import { RequireOwner } from "./guards/RequireOwner/RequireOwner";
 import { RequireSection } from "./guards/RequireSection/RequireSection";
 import { AppShell } from "./templates/AppShell/AppShell";
 import { LoginPage } from "./pages/LoginPage/LoginPage";
@@ -32,7 +33,14 @@ export const router = createBrowserRouter([
           </RequireSection>
         ),
       },
-      { path: "team", element: <TeamPage /> },
+      {
+        path: "team",
+        element: (
+          <RequireOwner>
+            <TeamPage />
+          </RequireOwner>
+        ),
+      },
     ],
   },
 ]);

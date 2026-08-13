@@ -224,6 +224,7 @@ export interface Dictionary {
     kickerTemplate: string;
     range: Record<"week" | "month" | "year", string>;
     empty: string;
+    noAccess: string;
   };
   sidebar: {
     disabledTooltip: string;

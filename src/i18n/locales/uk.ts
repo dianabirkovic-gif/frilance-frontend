@@ -277,6 +277,7 @@ export const uk: Dictionary = {
       year: "Рік",
     },
     empty: "Ще немає доходів за цей місяць",
+    noAccess: "Немає доступу до фінансів агентства.",
   },
   sidebar: {
     disabledTooltip: "Цей модуль ще не реалізовано",

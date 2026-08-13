@@ -33,15 +33,15 @@ export function AppShell() {
 
 function AppShellChrome() {
   const isDesktop = useMediaQuery(`(min-width: 900px)`);
-  const { user, canView } = useAuth();
+  const { user, canView, canManageTeam } = useAuth();
   const { title, subtitle } = useCurrentPageHeader();
   const userName = user?.fullName ?? "";
   const userRole = user?.role ?? "FREELANCER";
 
   // The one place the nav is filtered by the owner's grants; both shells render
   // from the same result (see `visibleNavGroups`).
-  const navGroups = useMemo(() => visibleNavGroups(canView), [canView]);
-  const tabItems = useMemo(() => visibleMobileTabItems(canView), [canView]);
+  const navGroups = useMemo(() => visibleNavGroups(canView, canManageTeam), [canView, canManageTeam]);
+  const tabItems = useMemo(() => visibleMobileTabItems(canView, canManageTeam), [canView, canManageTeam]);
 
   if (isDesktop) {
     return (

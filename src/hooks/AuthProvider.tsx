@@ -17,6 +17,18 @@ interface AuthContextValue {
   isLoadingSession: boolean;
   canView: (section: AppSection) => boolean;
   canEdit: (section: AppSection) => boolean;
+  /**
+   * Team management — inviting, editing access, and reading the roster at
+   * all. Not a section grant: it's owner-only by construction, since an owner
+   * able to grant it away could grant away their own tenant (backend
+   * `RoleAccessPolicy.canManageTeam` / `AppSection`'s Javadoc).
+   *
+   * Derived from the role here rather than sent by the server, which is the
+   * one place left where a role name gates UI. It holds because only OWNER
+   * has the flag on the backend; if that ever stops being true, this should
+   * become a field on `/auth/me` rather than a longer condition.
+   */
+  canManageTeam: boolean;
   login: (email: string, password: string) => Promise<authApi.AuthResponse>;
   claimInvite: (email: string, token: string, password: string) => Promise<authApi.AuthResponse>;
   logout: () => void;
@@ -120,6 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // better than one appearing that the member can't actually open.
   const canView = useCallback((section: AppSection) => user?.access?.[section] !== "NONE" && !!user?.access, [user]);
   const canEdit = useCallback((section: AppSection) => user?.access?.[section] === "FULL", [user]);
+  const canManageTeam = user?.role === "OWNER";
 
   return (
     <AuthContext.Provider
@@ -130,6 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoadingSession,
         canView,
         canEdit,
+        canManageTeam,
         login,
         claimInvite,
         logout,

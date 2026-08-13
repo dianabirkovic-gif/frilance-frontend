@@ -15,7 +15,12 @@ type Range = "week" | "month" | "year";
 
 const RANGE_VALUES: Range[] = ["week", "month", "year"];
 
-export function RevenueHero({ revenue }: { revenue: Revenue }) {
+/**
+ * `revenue` is null when the member has no Finance grant — the backend omits
+ * the panel rather than zeroing it, precisely so this renders "no access"
+ * instead of a ₴0 that reads as a real figure. Mirrors `FinanceStrip`.
+ */
+export function RevenueHero({ revenue }: { revenue: Revenue | null }) {
   const { locale, t } = useLocale();
   // Backend only serves the current month today (DashboardService.buildRevenue) —
   // this only switches the visual selection until the API accepts a range param.
@@ -27,14 +32,27 @@ export function RevenueHero({ revenue }: { revenue: Revenue }) {
   );
 
   const points = useMemo(() => {
-    const values = revenue.series.map((point) => point.cumulativeAmount);
+    const values = (revenue?.series ?? []).map((point) => point.cumulativeAmount);
     return scaleToViewBox(values, VIEW_WIDTH, BASELINE_Y - 10, 10);
-  }, [revenue.series]);
+  }, [revenue]);
 
   const linePath = buildSmoothLinePath(points);
   const areaPath = buildAreaPath(points, BASELINE_Y);
   const lastPoint = points[points.length - 1];
-  const isPositive = revenue.deltaPercent >= 0;
+  const isPositive = (revenue?.deltaPercent ?? 0) >= 0;
+
+  if (!revenue) {
+    return (
+      <Panel className={styles.panel}>
+        <div className={styles.top}>
+          <div className={styles.kicker}>
+            {interpolate(t.revenueHero.kickerTemplate, { month: monthFormat.format(new Date()) })}
+          </div>
+        </div>
+        <div className={styles.empty}>{t.revenueHero.noAccess}</div>
+      </Panel>
+    );
+  }
 
   return (
     <Panel className={styles.panel}>

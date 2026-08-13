@@ -276,6 +276,7 @@ export const en: Dictionary = {
       year: "Year",
     },
     empty: "No revenue for this month yet",
+    noAccess: "No access to agency finances.",
   },
   sidebar: {
     disabledTooltip: "This module isn't built yet",

@@ -8,15 +8,21 @@ import { uk } from "../../i18n/locales/uk";
 import { PageFabProvider } from "../../templates/AppShell/PageFabContext";
 import { MobileTabBar } from "./MobileTabBar";
 
-/** Defaults to a member the owner granted everything; pass `canView` to render a restricted one. */
-function renderTabBar(canView: (section: AppSection) => boolean = () => true) {
+/**
+ * Defaults to an owner the grants let everywhere; pass `canView` to render a
+ * restricted member, or `canManageTeam: false` to drop the owner-only items.
+ */
+function renderTabBar(
+  canView: (section: AppSection) => boolean = () => true,
+  canManageTeam = true,
+) {
   return render(
     <LocaleProvider>
       <MemoryRouter>
         <PageFabProvider>
           <MobileTabBar
-            navGroups={visibleNavGroups(canView)}
-            tabItems={visibleMobileTabItems(canView)}
+            navGroups={visibleNavGroups(canView, canManageTeam)}
+            tabItems={visibleMobileTabItems(canView, canManageTeam)}
             canViewFinance={canView("FINANCE")}
           />
         </PageFabProvider>
@@ -63,12 +69,29 @@ describe("MobileTabBar", () => {
     expect(screen.queryByText(uk.nav.items.clients)).not.toBeInTheDocument();
     expect(screen.queryByText(uk.mobileTabBar.financeTab)).not.toBeInTheDocument();
 
-    // Granted sections and the ungrantable ones (Overview, Team) still show.
+    // Granted sections still show, as does Overview — the landing screen
+    // nobody has to be granted. Team is there because this member is an owner.
     expect(screen.getByText(uk.nav.items.overview)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: uk.mobileTabBar.moreTab }));
     expect(screen.getByText(uk.nav.items.content)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: uk.nav.items.team })).toBeInTheDocument();
     expect(screen.queryByText(uk.nav.items.finance)).not.toBeInTheDocument();
+  });
+
+  /**
+   * Team isn't a grantable section — it's owner-only — so no combination of
+   * grants puts it in a member's nav. It used to be visible to everyone, and
+   * the roster behind it listed every colleague's email and access matrix.
+   */
+  it("hides Team from a member who isn't the owner, however much else they're granted", () => {
+    renderTabBar(() => true, false);
+
+    fireEvent.click(screen.getByRole("button", { name: uk.mobileTabBar.moreTab }));
+
+    expect(screen.queryByRole("link", { name: uk.nav.items.team })).not.toBeInTheDocument();
+    expect(screen.queryByText(uk.nav.items.team)).not.toBeInTheDocument();
+    // The rest of the More menu is unaffected.
+    expect(screen.getByText(uk.nav.items.content)).toBeInTheDocument();
   });
 
   it("closes the menu after navigating to Team", () => {

@@ -22,9 +22,14 @@ export interface NavItem {
    * when the member's access is NONE (see `visibleNavGroups`). Omitted for
    * items that aren't the owner's to grant: Overview is the landing screen
    * everyone gets, Reports has no section of its own yet, and Team is
-   * owner-gated inside the page instead (backend AppSection says the same).
+   * `ownerOnly` instead (backend AppSection says the same).
    */
   section?: AppSection;
+  /**
+   * Owner-only, which is not a grantable section — see `canManageTeam` in
+   * AuthProvider. Hidden from everyone else, the same way a NONE section is.
+   */
+  ownerOnly?: boolean;
   badge?: number;
   danger?: boolean;
 }
@@ -54,7 +59,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { labelKey: "finance", icon: FinanceIcon, section: "FINANCE" },
       { labelKey: "reports", icon: ReportsIcon },
       { labelKey: "analytics", icon: AnalyticsIcon, section: "ANALYTICS" },
-      { labelKey: "team", icon: TeamIcon, path: "/team" },
+      { labelKey: "team", icon: TeamIcon, path: "/team", ownerOnly: true },
     ],
   },
 ];
@@ -65,18 +70,36 @@ export const MOBILE_TAB_ITEMS: NavItem[] = [
 ];
 
 /**
- * Drops the sections this member has no access to, and any group left empty
- * by that. Sidebar and MobileTabBar both render from the result so a hidden
- * tab is hidden in both shells — presentational as ever, the caller passes
- * `canView` in rather than these reading the session themselves.
+ * Drops the sections this member has no access to, the owner-only items when
+ * they aren't the owner, and any group left empty by either. Sidebar and
+ * MobileTabBar both render from the result so a hidden tab is hidden in both
+ * shells — presentational as ever, the caller passes the predicates in rather
+ * than these reading the session themselves.
  */
-export function visibleNavGroups(canView: (section: AppSection) => boolean): NavGroup[] {
+export function visibleNavGroups(
+  canView: (section: AppSection) => boolean,
+  canManageTeam: boolean,
+): NavGroup[] {
   return NAV_GROUPS.map((group) => ({
     ...group,
-    items: group.items.filter((item) => !item.section || canView(item.section)),
+    items: group.items.filter((item) => isVisible(item, canView, canManageTeam)),
   })).filter((group) => group.items.length > 0);
 }
 
-export function visibleMobileTabItems(canView: (section: AppSection) => boolean): NavItem[] {
-  return MOBILE_TAB_ITEMS.filter((item) => !item.section || canView(item.section));
+export function visibleMobileTabItems(
+  canView: (section: AppSection) => boolean,
+  canManageTeam: boolean,
+): NavItem[] {
+  return MOBILE_TAB_ITEMS.filter((item) => isVisible(item, canView, canManageTeam));
+}
+
+function isVisible(
+  item: NavItem,
+  canView: (section: AppSection) => boolean,
+  canManageTeam: boolean,
+): boolean {
+  if (item.ownerOnly && !canManageTeam) {
+    return false;
+  }
+  return !item.section || canView(item.section);
 }
