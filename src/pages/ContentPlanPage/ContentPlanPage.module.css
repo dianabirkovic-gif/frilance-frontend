@@ -1,0 +1,301 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* ══════ Calendar controls ══════ */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.rangeNav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rangeBtn {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-md);
+  background: var(--ink-800);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-2);
+  flex-shrink: 0;
+  transition:
+    background var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
+}
+
+.rangeBtn:hover {
+  background: var(--ink-700);
+  color: var(--text-1);
+}
+
+.rangeLabel {
+  font-family: var(--f-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-1);
+  padding: 0 var(--sp-1);
+  white-space: nowrap;
+}
+
+.viewToggle {
+  display: flex;
+  gap: var(--sp-1);
+  background: var(--ink-800);
+  border: 1px solid var(--line);
+  padding: 3px;
+  border-radius: var(--r-pill);
+}
+
+.viewToggle button {
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+  transition:
+    background var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
+}
+
+.viewToggle button:hover {
+  color: var(--text-1);
+}
+
+.viewActive,
+.viewToggle button.viewActive {
+  background: var(--ink-700);
+  color: var(--text-1);
+}
+
+.todayBtn {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  background: var(--ink-800);
+  border: 1px solid var(--line);
+  padding: 6px 13px;
+  border-radius: var(--r-pill);
+  transition:
+    background var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard),
+    opacity var(--dur-fast) var(--ease-standard);
+}
+
+.todayBtn:hover:not(:disabled) {
+  background: var(--ink-700);
+  color: var(--text-1);
+}
+
+/* Today is already on screen — there is nowhere to jump to. */
+.todayBtn:disabled {
+  color: var(--text-3);
+  background: none;
+  border-color: transparent;
+  opacity: 0.5;
+  cursor: default;
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* The mockup's select pill: a real <select> stretched over the pill so the
+   native picker still drives it, with the label rendered underneath. */
+.clientFilter {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  background: var(--ink-800);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  padding: 7px 13px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+
+.clientFilter:hover {
+  background: var(--ink-700);
+}
+
+.clientFilter:focus-within {
+  border-color: var(--brand-400);
+}
+
+.clientFilterText {
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.clientFilter select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.newPostBtn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--brand-500);
+  color: var(--on-brand);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: var(--r-md);
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+
+.newPostBtn:hover {
+  background: var(--brand-600);
+}
+
+/* Mobile adds a post through the tab bar's FAB, not a button in the page, and
+   the topbar already names the period the header does. */
+@media (max-width: 899px) {
+  .newPostBtn,
+  .todayBtn {
+    display: none;
+  }
+
+  .toolbar {
+    gap: var(--sp-2);
+  }
+
+  .rangeLabel {
+    font-size: 13.5px;
+  }
+
+  .viewToggle button {
+    padding: 6px 11px;
+  }
+
+  .clientFilter {
+    flex: 1;
+    justify-content: space-between;
+  }
+
+  .clientFilterText {
+    max-width: none;
+  }
+}
+
+/* ══════ Status legend ══════ */
+.legend {
+  display: flex;
+  gap: var(--sp-4);
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 2px var(--sp-1);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--text-2);
+}
+
+.legendDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.legendDot.draft {
+  background: var(--text-3);
+}
+
+.legendDot.review {
+  background: var(--gold-500);
+}
+
+/* READY is --info, not the mockup's green: --success and --brand-500 are the
+   same hex in the light palette, so green/green would collapse the last two
+   steps of the lifecycle into one colour. Kept in step with
+   ContentPlanBoard.module.css and ContentPlanCalendar.module.css. */
+.legendDot.ready {
+  background: var(--info);
+}
+
+.legendDot.published {
+  background: var(--success);
+}
+
+/* A month of the range failed while the rest loaded — say so above the days
+   that did arrive rather than replacing them. */
+.partialError {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-radius: var(--r-md);
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.partialRetry {
+  font: inherit;
+  font-weight: 600;
+  color: var(--danger);
+  text-decoration: underline;
+  padding: 0;
+}
+
+/* A read is in flight over days already on screen. Dim, don't unmount — the
+   toolbar above is how the user navigates away. */
+.viewport {
+  transition: opacity var(--dur-base) var(--ease-standard);
+}
+
+.busy {
+  opacity: 0.55;
+}
+
+.state {
+  padding: 60px 0;
+  text-align: center;
+  color: var(--text-2);
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.retry {
+  background: var(--ink-800);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: var(--sp-2) var(--sp-4);
+  font-weight: 600;
+  color: var(--text-1);
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+
+.retry:hover {
+  background: var(--ink-700);
+}

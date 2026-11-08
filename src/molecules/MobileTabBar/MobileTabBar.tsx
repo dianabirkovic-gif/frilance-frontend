@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { NavLink, useLocation } from "react-router-dom";
 import type { NavGroup, NavItem } from "../../config/navItems/navItems";
-import { FinanceIcon, PlusIcon, ReportsIcon } from "../../atoms/icons/icons";
+import { PlusIcon, ReportsIcon } from "../../atoms/icons/icons";
 import { useLocale } from "../../i18n/useLocale";
 import { useCurrentPageFab } from "../../templates/AppShell/PageFabContext";
 import styles from "./MobileTabBar.module.css";
@@ -15,12 +15,14 @@ import styles from "./MobileTabBar.module.css";
  * module that gains a route — or a section the owner revokes — shows up the
  * same way in both shells without a second place to update.
  */
-function useMoreMenuItems(navGroups: NavGroup[], tabItems: NavItem[]) {
+function useMoreMenuItems(navGroups: NavGroup[], tabItems: NavItem[], trailingTabItems: NavItem[]) {
   return useMemo(
     () => navGroups.flatMap((group) => group.items).filter(
-      (item) => !tabItems.some((pinned) => pinned.path === item.path),
+      (item) =>
+        !tabItems.some((pinned) => pinned.path === item.path) &&
+        !trailingTabItems.some((pinned) => pinned.path === item.path),
     ),
-    [navGroups, tabItems],
+    [navGroups, tabItems, trailingTabItems],
   );
 }
 
@@ -43,49 +45,59 @@ function useElementHeight<T extends HTMLElement>() {
 interface MobileTabBarProps {
   /** Already filtered to this member's granted sections — see `visibleNavGroups`. */
   navGroups: NavGroup[];
+  /** Pinned tabs before the centre FAB. */
   tabItems: NavItem[];
-  canViewFinance: boolean;
+  /** Pinned tabs after it — Фінанси, in the slot the mockup puts it in. */
+  trailingTabItems: NavItem[];
 }
 
 /**
- * Mirrors dashboard.html's mobile tab bar: two real tabs, a center FAB for
- * the most common action, a Finance placeholder, then "Ще" (More) — a
- * popover listing every other module (see useMoreMenuItems above). The FAB
- * itself is driven by whichever page is mounted (see PageFabContext) — it
- * renders disabled unless the current page has registered an action.
+ * Mirrors the mockups' mobile tab bar: two tabs, a centre FAB for the most
+ * common action, Фінанси, then "Ще" (More) — a popover listing every other
+ * module (see useMoreMenuItems above). The FAB itself is driven by whichever
+ * page is mounted (see PageFabContext) — it renders disabled unless the
+ * current page has registered an action.
+ *
+ * Both pinned groups come from `config/navItems`, so a section the owner
+ * revokes disappears here exactly as it does from the sidebar — the Finance
+ * slot used to be hardcoded in this file, back when it led nowhere.
  */
-export function MobileTabBar({ navGroups, tabItems, canViewFinance }: MobileTabBarProps) {
+export function MobileTabBar({ navGroups, tabItems, trailingTabItems }: MobileTabBarProps) {
   const fab = useCurrentPageFab();
   const { t } = useLocale();
   const location = useLocation();
-  const moreItems = useMoreMenuItems(navGroups, tabItems);
+  const moreItems = useMoreMenuItems(navGroups, tabItems, trailingTabItems);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [tabbarRef, tabbarHeight] = useElementHeight<HTMLElement>();
 
   const isMoreActive = moreItems.some((item) => item.path && item.path === location.pathname);
 
+  // One rendering for both pinned groups. An item with no `path` is a module
+  // that isn't built yet and shows as a disabled slot rather than vanishing —
+  // the bar's layout is fixed, unlike the sidebar's list.
+  const renderTab = (item: NavItem) =>
+    item.path ? (
+      <NavLink
+        key={item.labelKey}
+        to={item.path}
+        end={item.path === "/"}
+        className={({ isActive }) => (isActive ? `${styles.tab} ${styles.active}` : styles.tab)}
+      >
+        <item.icon width={20} height={20} />
+        <span>{t.nav.items[item.labelKey]}</span>
+        {item.danger && <span className={styles.badge} />}
+      </NavLink>
+    ) : (
+      <div key={item.labelKey} className={`${styles.tab} ${styles.disabled}`} aria-disabled="true">
+        <item.icon width={20} height={20} />
+        <span>{t.nav.items[item.labelKey]}</span>
+        {item.danger && <span className={styles.badge} />}
+      </div>
+    );
+
   return (
     <nav ref={tabbarRef} className={styles.tabbar}>
-      {tabItems.map((item) =>
-        item.path ? (
-          <NavLink
-            key={item.labelKey}
-            to={item.path}
-            end={item.path === "/"}
-            className={({ isActive }) => (isActive ? `${styles.tab} ${styles.active}` : styles.tab)}
-          >
-            <item.icon width={20} height={20} />
-            <span>{t.nav.items[item.labelKey]}</span>
-            {item.danger && <span className={styles.badge} />}
-          </NavLink>
-        ) : (
-          <div key={item.labelKey} className={`${styles.tab} ${styles.disabled}`} aria-disabled="true">
-            <item.icon width={20} height={20} />
-            <span>{t.nav.items[item.labelKey]}</span>
-            {item.danger && <span className={styles.badge} />}
-          </div>
-        ),
-      )}
+      {tabItems.map(renderTab)}
       {fab ? (
         <button type="button" className={styles.fab} onClick={fab.onClick} aria-label={fab.label} title={fab.label}>
           <PlusIcon width={20} height={20} style={{ color: "var(--on-brand)" }} />
@@ -95,14 +107,7 @@ export function MobileTabBar({ navGroups, tabItems, canViewFinance }: MobileTabB
           <PlusIcon width={20} height={20} style={{ color: "var(--on-brand)" }} />
         </div>
       )}
-      {/* Placeholder for the unbuilt Finance module, hidden outright for a member
-          the owner gave no Finance access — same rule as every other section. */}
-      {canViewFinance && (
-        <div className={`${styles.tab} ${styles.disabled}`} aria-disabled="true">
-          <FinanceIcon width={20} height={20} />
-          <span>{t.mobileTabBar.financeTab}</span>
-        </div>
-      )}
+      {trailingTabItems.map(renderTab)}
       <button
         type="button"
         className={isMoreActive ? `${styles.tab} ${styles.active}` : styles.tab}

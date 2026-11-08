@@ -10,8 +10,11 @@ import { ClientDetailDrawer } from "../../organisms/ClientDetailDrawer/ClientDet
 import { ClientTable } from "../../organisms/ClientTable/ClientTable";
 import { usePageFab } from "../../templates/AppShell/PageFabContext";
 import { usePageHeader } from "../../templates/AppShell/PageHeaderContext";
+import { ClientContentPlanTab } from "./ClientContentPlanTab";
 import styles from "./ClientsPage.module.css";
 import { useArchiveClient } from "./useArchiveClient";
+import { useAssignableMembers } from "./useAssignableMembers";
+import { useUpdateClientAssignees } from "./useUpdateClientAssignees";
 import { useClientDetail } from "./useClientDetail";
 import { useClients } from "./useClients";
 import { useCreateClient } from "./useCreateClient";
@@ -33,6 +36,8 @@ export function ClientsPage() {
   // READ opens this page but not its writes — the backend rejects them either
   // way (ClientService), this just doesn't offer buttons that would only 403.
   const canEditClients = useAuth().canEdit("CLIENTS");
+  const { data: assignableMembers = [] } = useAssignableMembers(canEditClients);
+  const updateAssignees = useUpdateClientAssignees();
   const [activeFilter, setActiveFilter] = useState<FilterId>("all");
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
@@ -52,6 +57,14 @@ export function ClientsPage() {
   });
 
   const openAddClient = useCallback(() => setIsAddClientOpen(true), []);
+  const handleSaveAssignees = useCallback(
+    (assigneeIds: string[]) => {
+      if (!selectedClientId) return Promise.resolve();
+      return updateAssignees.mutateAsync({ id: selectedClientId, assigneeIds });
+    },
+    [selectedClientId, updateAssignees],
+  );
+
   usePageFab(canEditClients ? { label: t.clientsPage.newClientButton, onClick: openAddClient } : null);
 
   async function handleCreateClient(payload: CreateClientPayload) {
@@ -109,9 +122,16 @@ export function ClientsPage() {
       <ClientTable clients={filteredClients} onSelectClient={setSelectedClientId} />
 
       <ClientDetailDrawer
+        assignableMembers={assignableMembers}
+        /* Built as an element, not mounted here: the drawer renders it only
+           while its «Контент-план» tab is selected, so opening a client — which
+           always lands on Огляд — costs the content plan no request. */
+        contentTab={selectedClientId ? <ClientContentPlanTab clientId={selectedClientId} /> : undefined}
+        onSaveAssignees={handleSaveAssignees}
         open={selectedClientId !== null}
         detail={clientDetail.data}
         isLoading={clientDetail.isLoading}
+        isError={clientDetail.isError}
         isArchiving={archiveClient.isPending}
         canEdit={canEditClients}
         onClose={() => setSelectedClientId(null)}
@@ -120,6 +140,7 @@ export function ClientsPage() {
 
       {canEditClients && (
         <AddClientDrawer
+          assignableMembers={assignableMembers}
           open={isAddClientOpen}
           isSubmitting={createClient.isPending}
           onSubmit={handleCreateClient}

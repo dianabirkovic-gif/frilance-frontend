@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import type { ClientStage, ClientStatus, CreateClientPayload } from "../../api/clients";
+import type { ClientAssignee, ClientStage, ClientStatus, CreateClientPayload } from "../../api/clients";
 import { CLIENT_STAGE_ORDER } from "../../api/clients";
 import { ApiError } from "../../api/client";
 import { CloseIcon } from "../../atoms/icons/icons";
 import { useLocale } from "../../i18n/useLocale";
+import { AssigneePicker } from "../../molecules/AssigneePicker/AssigneePicker";
 import styles from "./AddClientDrawer.module.css";
 
 const STATUS_VALUES: ClientStatus[] = ["NEW", "ACTIVE", "ATTENTION", "ARCHIVED"];
@@ -20,10 +21,13 @@ const EMPTY_FORM = {
   contactPhone: "",
   contactEmail: "",
   stage: "BRIEF" as ClientStage,
+  assigneeIds: [] as string[],
 };
 
 interface AddClientDrawerProps {
   open: boolean;
+  /** The tenant's members, for staffing the client. Empty for a solo freelancer. */
+  assignableMembers: ClientAssignee[];
   isSubmitting: boolean;
   onSubmit: (payload: CreateClientPayload) => Promise<unknown>;
   onClose: () => void;
@@ -34,7 +38,13 @@ interface AddClientDrawerProps {
  * creation — same backdrop/panel pattern as ClientDetailDrawer so the two
  * drawers feel like one system rather than two competing shapes.
  */
-export function AddClientDrawer({ open, isSubmitting, onSubmit, onClose }: AddClientDrawerProps) {
+export function AddClientDrawer({
+  open,
+  assignableMembers,
+  isSubmitting,
+  onSubmit,
+  onClose,
+}: AddClientDrawerProps) {
   const { t } = useLocale();
   const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +65,15 @@ export function AddClientDrawer({ open, isSubmitting, onSubmit, onClose }: AddCl
     }
   }, [open]);
 
+  function toggleAssignee(id: string) {
+    setForm((current) => ({
+      ...current,
+      assigneeIds: current.assigneeIds.includes(id)
+        ? current.assigneeIds.filter((existing) => existing !== id)
+        : [...current.assigneeIds, id],
+    }));
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
@@ -71,6 +90,7 @@ export function AddClientDrawer({ open, isSubmitting, onSubmit, onClose }: AddCl
         contactPhone: form.contactPhone.trim(),
         contactEmail: form.contactEmail.trim(),
         stage: form.stage,
+        assigneeIds: form.assigneeIds,
       });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t.addClientDrawer.genericError);
@@ -110,6 +130,15 @@ export function AddClientDrawer({ open, isSubmitting, onSubmit, onClose }: AddCl
                 onChange={(event) => setForm({ ...form, niche: event.target.value })}
               />
             </label>
+
+            <fieldset className={styles.field}>
+              <legend>{t.assigneePicker.label}</legend>
+              <AssigneePicker
+                members={assignableMembers}
+                selectedIds={form.assigneeIds}
+                onToggle={toggleAssignee}
+              />
+            </fieldset>
 
             <div className={styles.row}>
               <label className={styles.field}>

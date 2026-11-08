@@ -4,12 +4,66 @@ import { LocaleProvider } from "../../i18n/LocaleProvider";
 import { uk } from "../../i18n/locales/uk";
 import { AddClientDrawer } from "./AddClientDrawer";
 
+const members = [
+  { id: "u1", name: "Оксана", initials: "ОК", role: "SMM" as const },
+  { id: "u2", name: "Аліна", initials: "АЛ", role: "PROJECT_MANAGER" as const },
+];
+
 describe("AddClientDrawer", () => {
+  it("staffs the client with the members that were ticked", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    render(
+      <LocaleProvider>
+        <AddClientDrawer open assignableMembers={members} isSubmitting={false} onSubmit={onSubmit} onClose={vi.fn()} />
+      </LocaleProvider>,
+    );
+
+    fireEvent.change(screen.getByLabelText(uk.addClientDrawer.fields.name), { target: { value: "MUSE'23" } });
+    fireEvent.change(screen.getByLabelText(uk.addClientDrawer.fields.contactName), { target: { value: "Н" } });
+    fireEvent.change(screen.getByLabelText(uk.addClientDrawer.fields.contactPhone), { target: { value: "+380" } });
+    fireEvent.change(screen.getByLabelText(uk.addClientDrawer.fields.contactEmail), { target: { value: "n@e.com" } });
+
+    // Several members on one client is the whole point of the field.
+    fireEvent.click(screen.getByRole("checkbox", { name: /Оксана/ }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /Аліна/ }));
+    fireEvent.click(screen.getByRole("button", { name: uk.addClientDrawer.submitIdle }));
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ assigneeIds: ["u1", "u2"] })),
+    );
+  });
+
+  it("unticking a member takes them off the staffing again", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    render(
+      <LocaleProvider>
+        <AddClientDrawer open assignableMembers={members} isSubmitting={false} onSubmit={onSubmit} onClose={vi.fn()} />
+      </LocaleProvider>,
+    );
+
+    const oksana = screen.getByRole("checkbox", { name: /Оксана/ });
+    fireEvent.click(oksana);
+    expect(oksana).toBeChecked();
+    fireEvent.click(oksana);
+    expect(oksana).not.toBeChecked();
+  });
+
+  it("says so rather than showing an empty box when the tenant has no members", () => {
+    render(
+      <LocaleProvider>
+        <AddClientDrawer open assignableMembers={[]} isSubmitting={false} onSubmit={vi.fn()} onClose={vi.fn()} />
+      </LocaleProvider>,
+    );
+
+    expect(screen.getByText(uk.assigneePicker.empty)).toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  });
+
   it("submits the form with the trimmed field values and defaults", async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     render(
       <LocaleProvider>
-        <AddClientDrawer open isSubmitting={false} onSubmit={onSubmit} onClose={vi.fn()} />
+        <AddClientDrawer open assignableMembers={members} isSubmitting={false} onSubmit={onSubmit} onClose={vi.fn()} />
       </LocaleProvider>,
     );
 
@@ -37,6 +91,7 @@ describe("AddClientDrawer", () => {
       contactPhone: "+380501234567",
       contactEmail: "natalia@example.com",
       stage: "BRIEF",
+      assigneeIds: [],
     });
   });
 
@@ -44,7 +99,7 @@ describe("AddClientDrawer", () => {
     const onSubmit = vi.fn().mockRejectedValue(new Error(uk.addClientDrawer.genericError));
     render(
       <LocaleProvider>
-        <AddClientDrawer open isSubmitting={false} onSubmit={onSubmit} onClose={vi.fn()} />
+        <AddClientDrawer open assignableMembers={members} isSubmitting={false} onSubmit={onSubmit} onClose={vi.fn()} />
       </LocaleProvider>,
     );
 
@@ -66,7 +121,7 @@ describe("AddClientDrawer", () => {
   it("disables submit while the create call is in flight", () => {
     render(
       <LocaleProvider>
-        <AddClientDrawer open isSubmitting onSubmit={vi.fn()} onClose={vi.fn()} />
+        <AddClientDrawer open assignableMembers={members} isSubmitting onSubmit={vi.fn()} onClose={vi.fn()} />
       </LocaleProvider>,
     );
 

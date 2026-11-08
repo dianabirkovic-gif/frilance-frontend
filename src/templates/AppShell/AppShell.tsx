@@ -1,6 +1,10 @@
 import { useMemo } from "react";
 import { Outlet } from "react-router-dom";
-import { visibleMobileTabItems, visibleNavGroups } from "../../config/navItems/navItems";
+import {
+  visibleMobileTabItems,
+  visibleMobileTrailingTabItems,
+  visibleNavGroups,
+} from "../../config/navItems/navItems";
 import { useAuth } from "../../hooks/useAuth";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { MobileHeader } from "../../organisms/MobileHeader/MobileHeader";
@@ -42,6 +46,10 @@ function AppShellChrome() {
   // from the same result (see `visibleNavGroups`).
   const navGroups = useMemo(() => visibleNavGroups(canView, canManageTeam), [canView, canManageTeam]);
   const tabItems = useMemo(() => visibleMobileTabItems(canView, canManageTeam), [canView, canManageTeam]);
+  const trailingTabItems = useMemo(
+    () => visibleMobileTrailingTabItems(canView, canManageTeam),
+    [canView, canManageTeam],
+  );
 
   if (isDesktop) {
     return (
@@ -63,7 +71,7 @@ function AppShellChrome() {
       <main className={styles.mobileContent}>
         <Outlet />
       </main>
-      <MobileTabBar navGroups={navGroups} tabItems={tabItems} canViewFinance={canView("FINANCE")} />
+      <MobileTabBar navGroups={navGroups} tabItems={tabItems} trailingTabItems={trailingTabItems} />
     </div>
   );
 }

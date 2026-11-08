@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
-import type { ClientDetail } from "../../api/clients";
+import { useState, type ReactNode } from "react";
+import type { ClientAssignee, ClientDetail } from "../../api/clients";
 import { ApiError } from "../../api/client";
 import { CloseIcon, LockIcon, MessageIcon, PhoneIcon } from "../../atoms/icons/icons";
 import { ConfirmationDialog } from "../ConfirmationDialog/ConfirmationDialog";
 import type { ClientDetailTab } from "../../i18n/dictionary";
 import { interpolate } from "../../i18n/interpolate";
 import { useLocale } from "../../i18n/useLocale";
+import { AssigneePicker } from "../../molecules/AssigneePicker/AssigneePicker";
 import { initials } from "../../utils/initials";
 import { CooperationTimeline } from "./CooperationTimeline";
 import styles from "./ClientDetailDrawer.module.css";
@@ -18,52 +19,81 @@ interface ClientDetailDrawerProps {
   open: boolean;
   detail: ClientDetail | undefined;
   isLoading: boolean;
+  /**
+   * The detail fetch failed — most often a 404 after the member removed
+   * themselves from the client's staffing, which is exactly when TanStack
+   * Query keeps the last good `detail` around. Rendering it anyway would show
+   * a client the user can no longer open, with staffing contradicting the
+   * save they just made.
+   */
+  isError: boolean;
   isArchiving: boolean;
   /** False under a READ grant on Clients — the archive action is hidden rather than offered and 403'd. */
   canEdit: boolean;
+  /** The tenant's members, for restaffing. Empty when the caller may not edit. */
+  assignableMembers: ClientAssignee[];
+  /**
+   * What the «Контент-план» tab shows. It is passed in as an element rather
+   * than built here because it reads the CONTENT section — another module's
+   * data, with its own access grant and its own query keys — and because an
+   * element only mounts (and only fetches) once its tab is actually selected.
+   * Omitted, the tab keeps the mockup's placeholder copy.
+   */
+  contentTab?: ReactNode;
+  onSaveAssignees: (assigneeIds: string[]) => Promise<unknown>;
   onClose: () => void;
   onArchive: (clientId: string) => Promise<unknown>;
 }
 
 /**
  * Right-side drawer (desktop) / bottom sheet (mobile) — one markup, two
- * behaviors via CSS media query at 900px (DESIGN_SYSTEM.md §12). Only the
- * overview tab has real content; content/finance/files/notes stay the
- * mockup's own empty-state copy — FR-06's encrypted notes are explicitly
- * out of scope, so notes never becomes more than the lock-note warning.
+ * behaviors via CSS media query at 900px (DESIGN_SYSTEM.md §12). The overview
+ * tab is this component's own; the content tab is whatever `contentTab` was
+ * given (`ClientsPage` fills it with the client's own content plan); finance and
+ * files stay the mockup's empty-state copy — and FR-06's encrypted notes are
+ * explicitly out of scope, so notes never becomes more than the lock-note
+ * warning.
  */
 export function ClientDetailDrawer({
   open,
   detail,
   isLoading,
+  isError,
   isArchiving,
   canEdit,
+  assignableMembers,
+  contentTab,
+  onSaveAssignees,
   onClose,
   onArchive,
 }: ClientDetailDrawerProps) {
   const { t } = useLocale();
-  const [activeTab, setActiveTab] = useState<ClientDetailTab>("overview");
-
-  useEffect(() => {
-    if (open) {
-      setActiveTab("overview");
-    }
-  }, [open, detail?.id]);
 
   return (
     <>
       <div className={open ? `${styles.backdrop} ${styles.open}` : styles.backdrop} onClick={onClose} />
       <div className={open ? `${styles.panel} ${styles.open}` : styles.panel}>
         <div className={styles.handle} />
-        {isLoading || !detail ? (
+        {isError && !isLoading ? (
+          <div className={styles.empty}>{t.clientDetailDrawer.unavailable}</div>
+        ) : isLoading || !detail ? (
           <div className={styles.empty}>{t.clientDetailDrawer.loading}</div>
         ) : (
+          /* Keyed, and holding the selected tab itself: closing the drawer
+             drops `detail`, which unmounts this and resets the tab to Огляд
+             for free. It used to be an effect up here that reset on open —
+             but an effect runs after the commit, so reopening a client whose
+             detail was still cached rendered one frame on the tab last left
+             open, and anything living behind that tab (the content plan) got
+             mounted and fetched for a tab nobody asked for. */
           <ClientDetailContent
+            key={detail.id}
             detail={detail}
-            activeTab={activeTab}
             isArchiving={isArchiving}
             canEdit={canEdit}
-            onSelectTab={setActiveTab}
+            assignableMembers={assignableMembers}
+            contentTab={contentTab}
+            onSaveAssignees={onSaveAssignees}
             onClose={onClose}
             onArchive={onArchive}
           />
@@ -75,23 +105,28 @@ export function ClientDetailDrawer({
 
 function ClientDetailContent({
   detail,
-  activeTab,
   isArchiving,
   canEdit,
-  onSelectTab,
+  assignableMembers,
+  contentTab,
+  onSaveAssignees,
   onClose,
   onArchive,
 }: {
   detail: ClientDetail;
-  activeTab: ClientDetailTab;
   isArchiving: boolean;
   canEdit: boolean;
-  onSelectTab: (tab: ClientDetailTab) => void;
+  assignableMembers: ClientAssignee[];
+  contentTab?: ReactNode;
+  onSaveAssignees: (assigneeIds: string[]) => Promise<unknown>;
   onClose: () => void;
   onArchive: (clientId: string) => Promise<unknown>;
 }) {
   const { t } = useLocale();
-  const subtitle = [detail.niche, detail.assigneeName].filter(Boolean).join(" · ");
+  const [activeTab, setActiveTab] = useState<ClientDetailTab>("overview");
+  const subtitle = [detail.niche, detail.assignees.map((member) => member.name).join(", ")]
+    .filter(Boolean)
+    .join(" · ");
   const isArchived = detail.status === "ARCHIVED";
   const [confirmArchiveOpen, setConfirmArchiveOpen] = useState(false);
 
@@ -144,7 +179,7 @@ function ClientDetailContent({
           <div
             key={tab}
             className={tab === activeTab ? `${styles.tab} ${styles.active}` : styles.tab}
-            onClick={() => onSelectTab(tab)}
+            onClick={() => setActiveTab(tab)}
           >
             {tab === "notes" && <LockIcon width={12} height={12} />}
             {t.clientDetailDrawer.tabs[tab]}
@@ -152,12 +187,20 @@ function ClientDetailContent({
         ))}
       </div>
 
-      {activeTab === "overview" && <OverviewTab detail={detail} />}
-      {activeTab === "content" && (
-        <div className={styles.body}>
-          <div className={styles.empty}>{t.clientDetailDrawer.contentEmpty}</div>
-        </div>
+      {activeTab === "overview" && (
+        <OverviewTab
+          detail={detail}
+          canEdit={canEdit}
+          assignableMembers={assignableMembers}
+          onSaveAssignees={onSaveAssignees}
+        />
       )}
+      {activeTab === "content" &&
+        (contentTab ?? (
+          <div className={styles.body}>
+            <div className={styles.empty}>{t.clientDetailDrawer.contentEmpty}</div>
+          </div>
+        ))}
       {activeTab === "finance" && (
         <div className={styles.body}>
           <div className={styles.empty}>{t.clientDetailDrawer.financeEmpty}</div>
@@ -192,8 +235,50 @@ function ClientDetailContent({
   );
 }
 
-function OverviewTab({ detail }: { detail: ClientDetail }) {
+function OverviewTab({
+  detail,
+  canEdit,
+  assignableMembers,
+  onSaveAssignees,
+}: {
+  detail: ClientDetail;
+  canEdit: boolean;
+  assignableMembers: ClientAssignee[];
+  onSaveAssignees: (assigneeIds: string[]) => Promise<unknown>;
+}) {
   const { t } = useLocale();
+  const [isEditingAssignees, setIsEditingAssignees] = useState(false);
+  const [draftAssigneeIds, setDraftAssigneeIds] = useState<string[]>([]);
+  const [isSavingAssignees, setIsSavingAssignees] = useState(false);
+  const [assigneeError, setAssigneeError] = useState<string | null>(null);
+
+  function startEditing() {
+    // Seed from what is actually staffed right now, not from the last draft —
+    // reopening after a cancel should not resurrect the abandoned edit.
+    setDraftAssigneeIds(detail.assignees.map((member) => member.id));
+    setAssigneeError(null);
+    setIsEditingAssignees(true);
+  }
+
+  function toggleAssignee(id: string) {
+    setDraftAssigneeIds((current) =>
+      current.includes(id) ? current.filter((existing) => existing !== id) : [...current, id],
+    );
+  }
+
+  async function handleSaveAssignees() {
+    setIsSavingAssignees(true);
+    setAssigneeError(null);
+    try {
+      await onSaveAssignees(draftAssigneeIds);
+      setIsEditingAssignees(false);
+    } catch (err) {
+      setAssigneeError(err instanceof ApiError ? err.message : t.clientDetailDrawer.assigneesErrorFallback);
+    } finally {
+      setIsSavingAssignees(false);
+    }
+  }
+
   return (
     <div className={styles.body}>
       <div className={styles.sectionTitle}>{t.clientDetailDrawer.sectionStage}</div>
@@ -213,6 +298,59 @@ function OverviewTab({ detail }: { detail: ClientDetail }) {
           <div className={styles.statValue}>{detail.cooperationDurationLabel}</div>
         </div>
       </div>
+
+      <div className={styles.sectionTitleRow}>
+        <span className={styles.sectionTitle}>{t.clientDetailDrawer.sectionAssignees}</span>
+        {canEdit && !isEditingAssignees && (
+          <button type="button" className={styles.sectionAction} onClick={startEditing}>
+            {t.clientDetailDrawer.editAssignees}
+          </button>
+        )}
+      </div>
+
+      {isEditingAssignees ? (
+        <div className={styles.assigneeEditor}>
+          <AssigneePicker
+            members={assignableMembers}
+            selectedIds={draftAssigneeIds}
+            onToggle={toggleAssignee}
+            disabled={isSavingAssignees}
+          />
+          {assigneeError && <div className={styles.assigneeError}>{assigneeError}</div>}
+          <div className={styles.assigneeActions}>
+            <button
+              type="button"
+              className={styles.assigneeCancel}
+              onClick={() => setIsEditingAssignees(false)}
+              disabled={isSavingAssignees}
+            >
+              {t.clientDetailDrawer.cancelAssignees}
+            </button>
+            <button
+              type="button"
+              className={styles.assigneeSave}
+              onClick={handleSaveAssignees}
+              disabled={isSavingAssignees}
+            >
+              {isSavingAssignees ? t.clientDetailDrawer.savingAssignees : t.clientDetailDrawer.saveAssignees}
+            </button>
+          </div>
+        </div>
+      ) : detail.assignees.length === 0 ? (
+        <p className={styles.assigneesEmpty}>{t.clientDetailDrawer.assigneesEmpty}</p>
+      ) : (
+        <ul className={styles.assigneeList}>
+          {detail.assignees.map((member) => (
+            <li key={member.id} className={styles.assigneeRow}>
+              <span className={styles.assigneeAvatar} aria-hidden>
+                {member.initials}
+              </span>
+              <span className={styles.assigneeName}>{member.name}</span>
+              <span className={styles.assigneeRole}>{t.role[member.role]}</span>
+            </li>
+          ))}
+        </ul>
+      )}
 
       {detail.contactName && (
         <>

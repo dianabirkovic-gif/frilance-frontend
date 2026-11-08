@@ -16,10 +16,70 @@ alongside implementing it.
 
 ## Current state
 
-Implemented: login (FR-01) and the Overview dashboard screen, end to end
+Implemented: login (FR-01), the Overview dashboard screen, Clients (FR-05),
+Team (FR-02/FR-03), the content plan (FR-08) and Фінанси (FR-09), end to end
 against the real backend API. Every other sidebar/tab-bar nav item
 (`config/navItems/navItems.ts`) is a disabled placeholder with no route —
 do not wire a nav item to a route until the page behind it actually exists.
+
+The mobile tab bar pins Огляд and Клієнти before the FAB and Фінанси after it
+(`MOBILE_TAB_ITEMS` / `MOBILE_TRAILING_TAB_ITEMS`); the content plan is
+reached through "Ще", like Команда. The Фінанси slot is not a tab that was
+added — it existed as a hardcoded disabled placeholder while the module was
+unbuilt, and moving it into `config/` is what made a revoked grant hide it in
+both shells. Pinning anything *further* is still a decision about which of
+these goes, not an addition.
+
+The content plan renders one month three ways behind a Тиждень / Місяць /
+Список toggle: `ContentPlanBoard` (the mockup's day-column grid, in both the
+week and month layouts) and `ContentPlanCalendar` (the day-by-day table).
+`ContentPlanPage` holds a single `anchor` date for all three, so switching
+views keeps the user where they were. Because a week can straddle two
+months and `GET /content-plan` serves one month per call, `useContentPlan`
+takes the *list* of months the visible range touches and merges the results
+— keyed per month, so the two grid views share a cache.
+
+`FinancePage` is one month of the register — stat cards, the dual-series
+cash-flow chart, the chip row and the operations table — walked with ‹ ›. Three
+things about it are load-bearing and pinned by tests:
+
+- **The toolbar renders in every state**, loading and failed included. Same
+  rule as the content plan's and the client drawer's month navigator: leaving
+  a month that would not load is what the navigation is *for*.
+- **`useFinance` must not gain `placeholderData: keepPreviousData`**, even
+  though a single `useQuery` would allow it. The month heading is local state
+  that flips on the click, so retained rows appear under the next month's
+  title, and a retry on a failed month brings the old one back looking like a
+  success. The content plan is structurally immune (posts go through
+  `buildMonthDays`, which drops anything outside the month); a flat register is
+  not. This is the same decision, for the same reason, as `useClientMonthPlan`.
+- **«Прострочено» is not a status the UI can set.** The backend stores
+  `PENDING | PAID` and sends `overdue` as a derived flag, so
+  `PaymentStatusBadge` swaps the label and `FinanceEntryDrawer`'s stepper has
+  two buttons. Adding a third would be inventing a state nothing can write.
+
+The four stat cards count settled money only, and a delta of `null` renders as
+nothing rather than "+100%" — see `../freelance-all/new-requirements.md` #26b.
+`FinanceStatCards`'s `Delta` takes `risingIsGood` rather than a negated
+percentage: the arrow always points the way the number moved and only the
+colour knows whether that is good news, because flipping the sign would also
+flip the sentence a screen reader hears.
+
+Two rules that audit found the hard way and that regression tests now pin:
+
+- **Navigation moves the anchor itself, never the start of the range it
+  produces.** `planRange.ts`'s `stepAnchor` is the only place that may change
+  it. Rebuilding it as the month's 1st or the week's Monday makes it mean
+  something different depending on how the user got there (`planRange.test.ts`
+  has both repros).
+- **A partly-loaded or partly-failed range never blanks the page.**
+  `useContentPlan` reports `isLoading` only before the *first* answer and
+  `isError` only when nothing loaded at all; a month that fails gets a banner
+  over the days that did arrive. The toolbar is how the user navigates away
+  from a bad month, so unmounting it is the one response that traps them.
+  Note `placeholderData: keepPreviousData` does **not** work here —
+  `useQueries` rebuilds its observers when the key array changes — hence the
+  retained snapshot in that hook.
 
 ## Design tokens — never hardcode a color, spacing value, or font
 
@@ -83,6 +143,12 @@ not by which screen it happens to appear on first:
 - `config/`: shared non-component data consumed across levels
   (`navItems/navItems.ts` — read by both the `Sidebar` organism and the
   `MobileTabBar` molecule). Not itself a level in the hierarchy.
+- `utils/`: pure, component-free helpers shared across levels
+  (`initials.ts`, `calendarDays.ts` — the calendar's day/week/month
+  arithmetic, read by the content plan's page and both of its calendar
+  organisms). A helper used by exactly one component stays co-located with
+  it (`RevenueHero/chartPath.ts`); it moves here the moment a second
+  component needs it, rather than one organism importing another's internals.
 - `guards/`: cross-cutting, non-visual concerns that don't fit the visual
   pyramid (`RequireAuth/`, a router-level auth wrapper). Deliberately kept
   out of atoms→pages rather than forced into one.
@@ -131,6 +197,154 @@ rendering. This app takes that recommendation:
   should avoid.
 
 ### Deviations from the HTML reference
+
+`ContentPlanBoard` is the content plan's week/month grid, ported from
+`content-plan/content-plan.html`. That mockup's post card carries a
+publication time and its detail panel a cover image, caption, platform,
+responsible person and comments — none of which exist on `Post`
+(`api/contentPlan.ts`) or the backend's `post` table. The card shows the
+post's topic where the mockup shows its time, and `PostDrawer` stays the
+create/edit form (with the mockup's status stepper instead of a dropdown)
+rather than becoming the mockup's read-only detail panel. Don't "fix" this
+by inventing fields; see `../freelance-all/new-requirements.md` #20.
+
+A client carries `assignees` — several members, rendered by the
+`AssigneeStack` molecule in the table, and changed through the shared
+`AssigneePicker` molecule in two places: `AddClientDrawer` when creating, and
+the detail drawer's Огляд tab afterwards (its own
+`PUT /clients/{id}/assignees`, so it cannot blank fields the drawer never
+sees — `new-requirements.md` #22a). Staffing is access control, not a label (a member sees only
+their own clients), so the picker says so and writes replace the whole set:
+omitting somebody removes them. The roster comes from
+`useAssignableMembers`, which is only enabled when the member may edit clients
+— the endpoint is guarded on that grant. See `new-requirements.md` #22.
+
+The client detail drawer's «Контент-план» tab is a **slot**, not a feature the
+drawer owns: `ClientDetailDrawer` takes a `contentTab` element and renders it
+only while that tab is selected, and `ClientsPage` fills it with
+`ClientContentPlanTab` — one whole month of that client's plan, read-only,
+with ‹ › to reach any other month. Passing an element rather than props is
+what makes it lazy (the drawer always opens on Огляд, so nothing is fetched
+until someone asks for the plan), and keeping the fetch on the page is what
+keeps an organism from reaching into another module's section. It shares
+`contentPlanQueryKey` with the module itself, so a post edited there is
+already correct here — though it usually still fetches, because the module
+keys its months on `null` unless its filter is set to this very client. It is
+gated on `canView("CONTENT")`, not on the Clients grant that opened the
+drawer. See `../freelance-all/new-requirements.md` #25.
+
+The tab shows one month per view, which is what the endpoint serves, so
+`useClientMonthPlan` is a single `useQuery`. `placeholderData: keepPreviousData`
+would technically *work* there — it is `useContentPlan` that cannot use it,
+because `useQueries` rebuilds its observers when the key array changes — but
+**don't add it back.** It was tried: the tab's month label is local state that
+flips the moment an arrow is clicked, so retained data means August's posts
+under September's heading, and a "retry" on a failed month brings the previous
+month back looking like a success (`refetch` returns an errored query to
+`pending`, which re-arms the placeholder). The module is structurally immune
+because it pours posts into `buildMonthDays(month, ...)`, which drops anything
+dated outside the month; a flat list is not. Any future attempt has to carry
+the label with the data — `ContentPlanDto.month` is echoed by the server for
+exactly that.
+
+Two things that tab makes load-bearing, both now pinned by tests:
+
+- **The drawer's selected tab is state inside `ClientDetailContent`, keyed on
+  the client, and must never become an effect in the parent again.** It was
+  one — reset on open — and an effect runs *after* the commit, so reopening a
+  client whose detail was still cached (`staleTime` is 30s) rendered one frame
+  on whatever tab was last left open. Harmless while every tab was static
+  copy; the moment one of them fetches, it means requests fired for a tab
+  nobody selected. Closing the drawer drops `detail`, which unmounts that
+  component and resets the tab for free.
+- **The month navigator renders in every state — loading, empty, failed.** It
+  is the same rule the module's toolbar follows: the navigation is how someone
+  leaves a month that has nothing in it or would not load, so a state that
+  replaces its own navigation traps whoever reached it.
+
+A post carries `authorName` — who created it, stamped server-side and never
+transferred by an edit. It renders on the board card, as its own table column
+in the list view, beside the type in the client drawer's «Контент-план» row,
+and read-only in `PostDrawer`; there is no control to change it. `authorName`
+is null on posts that predate the column, and each surface renders that absence
+differently on purpose (nothing / em dash / nothing / "Невідомий") — a table
+cell has to hold its column, a meta line does not. See `new-requirements.md`
+#21.
+
+**Never render `ApiError.message`.** It is the backend's English, and for a
+validation failure it is the bare literal "Validation failed" — the useful text
+is in `details`. Go through `i18n/apiErrorMessage.ts`, which prefers a known
+error `code` (localized here), then `details`, then the message. See
+`new-requirements.md` #24b.
+
+**`PostDrawer`'s reset effect must not depend on `clients`.** It once did, and
+because the plan's client rows change identity whenever anyone adds, renames or
+archives a client, an ordinary refetch re-ran the reset and threw away whatever
+the member had typed — a half-written note with it. Choosing a default client is
+a separate effect that only ever fills a blank. Any new "reset the form"
+dependency needs the same question asked of it: can this change while the drawer
+is open?
+
+The Фінанси screen drops two of `finances.html`'s actions rather than stubbing
+them: «Завантажити PDF» is FR-17 (the unbuilt `reports` module) and «Надіслати
+нагадування» needs outbound notifications, which nothing has. The primary slot
+the reminder held is «Позначити оплаченим» instead — this module's most
+frequent write, through the narrow `PATCH …/payment-status`. The mockup's
+Тиждень / Місяць / Рік range tabs are likewise gone, replaced by real ‹ ›
+month navigation: the tabs are static in the mockup, and one month per request
+is what the endpoint serves. See `new-requirements.md` #26 and #26d.
+
+`utils/chartPath.ts` moved out of `organisms/RevenueHero/` when `CashFlowChart`
+became its second caller — the rule this guide states about co-located helpers,
+applied. Its `scaleSeriesToViewBox` scales several series against one shared
+domain, which is what keeps the cash-flow chart's income and expense lines
+comparable; scaling each to its own maximum draws a losing month as two level
+lines. `utils/money.ts` arrived the same way, from four finance components
+needing one `Intl.NumberFormat` instead of four chances to disagree.
+
+`PaymentStatusBadge` is a third status atom beside `StatusBadge` (clients) and
+`Chip` (content), not a fourth tone on either. DESIGN_SYSTEM.md 12.7 puts
+«Очікує» on informational blue precisely because the gold that means "needs
+attention" in the other two modules would make every unpaid invoice look late —
+so merging the taxonomies would lose the distinction the design makes.
+
+A post carries a **note** — rich text (bold, italic, underline, bulleted and
+numbered lists, emoji), edited in `PostDrawer` and nowhere else: no marker on
+the board card, no column in the list view. `molecules/RichTextEditor` wraps
+TipTap for it, and its enabled extensions are the client half of the backend's
+`PostNoteSanitizer` allowlist — enable one the server drops and the formatting
+disappears on save. This is the one real UI dependency in the app and it costs
+~140 KB gzip; see `new-requirements.md` #24 before reaching for another.
+
+A completed client (`archived` on the plan's own client rows — the backend's
+`ClientStatus.ARCHIVED`) stays in the *toolbar's* filter, because its months are
+still worth reading. What it cannot do is take a new post, so `PostDrawer` drops
+it from the client picker entirely while creating, and keeps it while editing —
+a post already on such a client edits normally, and there the option is named
+"{name} (завершено)". When the page filter is on a completed client the drawer
+falls to the first plannable one and says so under the picker; don't make that
+substitution silent. The backend refuses the write either way; see
+`new-requirements.md` #23.
+
+The card's status is a labelled chip, not the mockup's bare coloured dot.
+The dot was the control that advances the status (#17) and a 7px unlabelled
+target is one nobody finds — a colour is also only legible against the
+legend. If you restyle the card, keep the status named and keep the whole
+chip clickable.
+
+The board card is washed with its status colour at token alpha via a local
+`--card-tint` alias, layered as a `background-image` over `background-color`
+so the card keeps its elevation over the day column. Any rule touching a
+card's background must use the **longhand** properties — a `background:`
+shorthand (in `:hover`, say) resets `background-image` and silently drops the
+tint.
+
+The four-status colour scale (grey → amber → blue-grey → green) is spelled
+out in three stylesheets — `ContentPlanPage.module.css` (legend),
+`ContentPlanBoard.module.css` (card border + chip dot) and
+`ContentPlanCalendar.module.css` (table chips) — and they must agree. READY
+deviates from the mockup's green on purpose: `--success` and `--brand-500`
+are the same hex in the light palette. See `new-requirements.md` #20a.
 
 `AttentionList` uses one shared markup (vertical card: severity dot, title,
 subtitle, meta) that reflows between a mobile horizontal scroll row and a

@@ -1,4 +1,5 @@
 import type { ClientListItem } from "../../api/clients";
+import { AssigneeStack } from "../../molecules/AssigneeStack/AssigneeStack";
 import { StatusBadge } from "../../atoms/StatusBadge/StatusBadge";
 import { useLocale } from "../../i18n/useLocale";
 import { Panel } from "../../molecules/Panel/Panel";
@@ -62,14 +63,7 @@ export function ClientTable({ clients, onSelectClient }: ClientTableProps) {
                   </div>
                 </td>
                 <td>
-                  {client.assigneeName ? (
-                    <div className={styles.specCell}>
-                      <div className={styles.specAvatar}>{client.assigneeInitials}</div>
-                      {client.assigneeName}
-                    </div>
-                  ) : (
-                    <span className={styles.mutedCell}>—</span>
-                  )}
+                  <AssigneeStack assignees={client.assignees} withName />
                 </td>
                 <td>
                   <StatusBadge status={client.status} />
@@ -94,7 +88,7 @@ export function ClientTable({ clients, onSelectClient }: ClientTableProps) {
               <div className={styles.cardName}>{client.name}</div>
               <div className={styles.cardMeta}>
                 <StatusBadge status={client.status} />
-                {client.assigneeName}
+                <AssigneeStack assignees={client.assignees} />
               </div>
             </div>
             <div className={styles.cardRight}>

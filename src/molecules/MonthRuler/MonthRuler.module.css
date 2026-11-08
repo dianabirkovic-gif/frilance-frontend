@@ -1,0 +1,28 @@
+.ruler {
+  background: var(--ink-900);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 14px 20px;
+}
+
+:global(body.light-theme) .ruler {
+  box-shadow: var(--sh-sm);
+}
+
+.ruler svg {
+  width: 100%;
+  height: 40px;
+  display: block;
+}
+
+.ticks {
+  font-family: var(--f-mono);
+}
+
+/* The ruler is orientation, not content — the phone screen it would eat is
+   better spent on the day list itself. */
+@media (max-width: 899px) {
+  .ruler {
+    display: none;
+  }
+}

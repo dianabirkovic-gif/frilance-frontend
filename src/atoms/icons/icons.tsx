@@ -119,6 +119,30 @@ export function ChevronDownIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function ChevronLeftIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props} strokeWidth={2}>
+      <path d="M15 6l-6 6 6 6" />
+    </Icon>
+  );
+}
+
+export function ChevronRightIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props} strokeWidth={2}>
+      <path d="M9 6l6 6-6 6" />
+    </Icon>
+  );
+}
+
+export function TrashIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+    </Icon>
+  );
+}
+
 export function PlusIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props} strokeWidth={2.4}>
@@ -173,6 +197,57 @@ export function SunIcon(props: SVGProps<SVGSVGElement>) {
     <Icon {...props}>
       <circle cx="12" cy="12" r="4.5" />
       <path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" />
+    </Icon>
+  );
+}
+
+/*
+ * The post note's formatting toolbar (#24). Not from the prototype — it has no
+ * rich-text field — so these follow the same 24x24 stroked grammar as the rest
+ * rather than a library's filled glyphs.
+ */
+
+export function BoldIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M7 4h6a4 4 0 0 1 0 8H7z" />
+      <path d="M7 12h7a4 4 0 0 1 0 8H7z" />
+    </Icon>
+  );
+}
+
+export function ItalicIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M15 4h-5M14 20H9M14 4l-4 16" />
+    </Icon>
+  );
+}
+
+export function UnderlineIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M7 4v7a5 5 0 0 0 10 0V4M6 20h12" />
+    </Icon>
+  );
+}
+
+export function BulletListIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M9 6h11M9 12h11M9 18h11" />
+      <circle cx="4.5" cy="6" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="4.5" cy="12" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="4.5" cy="18" r="1.2" fill="currentColor" stroke="none" />
+    </Icon>
+  );
+}
+
+export function OrderedListIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M9 6h11M9 12h11M9 18h11" />
+      <path d="M3.4 4.6h1.1V8M3.2 11.2h1.7l-1.8 2.6h1.9M3.2 16.6h1.6l-1.5 1.6h.4a.9.9 0 1 1-.5 1.6" strokeWidth={1.4} />
     </Icon>
   );
 }

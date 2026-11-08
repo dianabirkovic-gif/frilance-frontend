@@ -1,0 +1,29 @@
+.stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  white-space: nowrap;
+}
+
+.star {
+  background: none;
+  border: none;
+  padding: 0 1px;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--line-strong);
+  cursor: default;
+}
+
+button.star {
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+
+button.star:hover {
+  color: var(--warning);
+}
+
+.filled {
+  color: var(--warning);
+}

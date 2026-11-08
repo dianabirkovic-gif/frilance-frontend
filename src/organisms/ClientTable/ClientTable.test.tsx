@@ -9,8 +9,7 @@ const sample: ClientListItem = {
   id: "1",
   name: "MUSE'23",
   niche: "Beauty-простір",
-  assigneeName: "Оксана",
-  assigneeInitials: "ОК",
+  assignees: [{ id: "u1", name: "Оксана", initials: "ОК", role: "SMM" as const }],
   status: "ACTIVE",
   nextPostLabel: "Пн, Reels",
   monthlyRevenue: 32000,
@@ -26,7 +25,7 @@ describe("ClientTable", () => {
     );
 
     expect(screen.getAllByText(sample.name).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(sample.assigneeName as string).length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText("Оксана").length).toBeGreaterThan(0);
     expect(screen.getAllByText("₴32 000").length).toBeGreaterThan(0);
   });
 

@@ -1,3 +1,9 @@
+/**
+ * The Ledger Line's geometry, shared by every chart that draws one: the
+ * dashboard's revenue hero and the Фінанси module's dual-series cash flow.
+ * It started co-located with `RevenueHero`; a second component needing it is
+ * exactly the move to `utils/` the frontend CLAUDE.md describes.
+ */
 export interface ChartPoint {
   x: number;
   y: number;
@@ -61,4 +67,39 @@ export function scaleToViewBox(
     x: index * step,
     y: topPadding + usableHeight * (1 - (value - min) / range),
   }));
+}
+
+/**
+ * Several series on one shared axis. Scaling each series against its own
+ * maximum would draw a month of ₴96 400 in expenses at the same height as
+ * ₴184 200 of income — two lines that look level while saying the opposite —
+ * so the domain is taken across all of them at once.
+ *
+ * Series of differing lengths keep their own x-step, so a series that stops
+ * early stops early rather than being stretched across the full width.
+ */
+export function scaleSeriesToViewBox(
+  series: number[][],
+  viewBoxWidth: number,
+  viewBoxHeight: number,
+  topPadding = 10,
+): ChartPoint[][] {
+  const all = series.flat();
+  if (all.length === 0) {
+    return series.map(() => []);
+  }
+
+  const max = Math.max(...all);
+  const min = Math.min(0, ...all);
+  const range = max - min || 1;
+  const usableHeight = viewBoxHeight - topPadding;
+
+  return series.map((values) => {
+    if (values.length === 0) return [];
+    const step = values.length === 1 ? 0 : viewBoxWidth / (values.length - 1);
+    return values.map((value, index) => ({
+      x: index * step,
+      y: topPadding + usableHeight * (1 - (value - min) / range),
+    }));
+  });
 }

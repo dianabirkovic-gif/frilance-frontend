@@ -40,8 +40,9 @@ export interface NavGroup {
 }
 
 /**
- * Only "overview" has a `path` today. Add a `path` here the same release you
- * add the route in router.tsx — see frontend CLAUDE.md "Adding a new module".
+ * Overview, Clients, the content plan and Фінанси have real routes; the rest
+ * are placeholders. Add a `path` here the same release you add the route in
+ * router.tsx — see frontend CLAUDE.md "Adding a new module".
  */
 export const NAV_GROUPS: NavGroup[] = [
   {
@@ -49,14 +50,14 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { labelKey: "overview", icon: OverviewIcon, path: "/" },
       { labelKey: "clients", icon: ClientsIcon, path: "/clients", section: "CLIENTS" },
-      { labelKey: "content", icon: ContentIcon, section: "CONTENT" },
+      { labelKey: "content", icon: ContentIcon, path: "/content", section: "CONTENT" },
       { labelKey: "target", icon: TargetIcon, section: "TARGET" },
     ],
   },
   {
     labelKey: "business",
     items: [
-      { labelKey: "finance", icon: FinanceIcon, section: "FINANCE" },
+      { labelKey: "finance", icon: FinanceIcon, path: "/finance", section: "FINANCE" },
       { labelKey: "reports", icon: ReportsIcon },
       { labelKey: "analytics", icon: AnalyticsIcon, section: "ANALYTICS" },
       { labelKey: "team", icon: TeamIcon, path: "/team", ownerOnly: true },
@@ -64,9 +65,25 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
+/**
+ * The pinned mobile tabs, matching the mockups' tab bar, split around the
+ * centre FAB: two before it, Фінанси after it. That is the layout
+ * `finances.html` draws, and Finance sat in the trailing slot from the start
+ * — as a disabled placeholder until the module existed. Turning it into a
+ * link is therefore not a third tab being added, it is the slot the bar
+ * always had finally going somewhere.
+ *
+ * The content plan still stays out of them and is reached through "Ще", same
+ * as Team. Pinning anything further is a decision about which of these goes.
+ */
 export const MOBILE_TAB_ITEMS: NavItem[] = [
   { labelKey: "overview", icon: OverviewIcon, path: "/" },
   { labelKey: "clients", icon: ClientsIcon, path: "/clients", section: "CLIENTS" },
+];
+
+/** Pinned tabs rendered after the centre FAB — see MOBILE_TAB_ITEMS. */
+export const MOBILE_TRAILING_TAB_ITEMS: NavItem[] = [
+  { labelKey: "finance", icon: FinanceIcon, path: "/finance", section: "FINANCE" },
 ];
 
 /**
@@ -91,6 +108,13 @@ export function visibleMobileTabItems(
   canManageTeam: boolean,
 ): NavItem[] {
   return MOBILE_TAB_ITEMS.filter((item) => isVisible(item, canView, canManageTeam));
+}
+
+export function visibleMobileTrailingTabItems(
+  canView: (section: AppSection) => boolean,
+  canManageTeam: boolean,
+): NavItem[] {
+  return MOBILE_TRAILING_TAB_ITEMS.filter((item) => isVisible(item, canView, canManageTeam));
 }
 
 function isVisible(

@@ -1,0 +1,79 @@
+.panel {
+  padding: 20px 24px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.title {
+  font-family: var(--f-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.legend {
+  display: flex;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--text-2);
+}
+
+.legendValue {
+  font-family: var(--f-mono);
+  font-size: 11.5px;
+  color: var(--text-1);
+}
+
+.legendLine {
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+.incomeLine {
+  background: var(--brand-400);
+}
+
+/* Dashed, unfilled and neutral — see the component's own note on why expenses
+   deliberately do not get a second saturated colour. */
+.expenseLine {
+  height: 0;
+  border-top: 2px dashed var(--text-3);
+}
+
+.chart {
+  margin-top: var(--sp-4);
+}
+
+.chart svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* `var()` does not resolve inside an SVG presentation attribute, so the tick
+   labels take their font from here — same reason MonthRuler does. */
+.tickLabels {
+  font-family: var(--f-mono);
+}
+
+.empty {
+  font-size: 12.5px;
+  color: var(--text-3);
+  padding: 32px 0 8px;
+}

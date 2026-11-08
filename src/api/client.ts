@@ -47,7 +47,16 @@ export function setStoredUser(user: StoredUser | null): void {
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
+    /** The backend's English prose. For developers and logs — never render it raw. */
     message: string,
+    /**
+     * A stable machine-readable tag for errors the user is meant to read, so
+     * the UI can say them in the user's own language. Null for the ones nobody
+     * has needed to localize; see `i18n/apiErrorMessage.ts`.
+     */
+    public readonly code: string | null = null,
+    /** Field-level validation messages, already localized by the backend's validator. */
+    public readonly details: string[] = [],
   ) {
     super(message);
     this.name = "ApiError";
@@ -89,7 +98,12 @@ export async function apiRequest<TResponse>(path: string, options: RequestOption
 
   if (!response.ok) {
     const errorBody = await response.json().catch(() => null);
-    throw new ApiError(response.status, errorBody?.message ?? response.statusText);
+    throw new ApiError(
+      response.status,
+      errorBody?.message ?? response.statusText,
+      errorBody?.code ?? null,
+      errorBody?.details ?? [],
+    );
   }
 
   if (response.status === 204) {

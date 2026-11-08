@@ -32,8 +32,17 @@ npm install
 npm run dev
 ```
 
-Requires `frilance-os-backend` running locally (see that repo's README) —
-log in with its seeded dev user `diana@example.com` / `password123`.
+Requires `frilance-os-backend` running locally (see that repo's README). Under
+the backend's `dev` profile you can log in with its demo owner
+`diana@example.com` / `password123`; those accounts do not exist in any other
+profile, so register a new account there.
+
+## Production build
+
+`VITE_API_BASE_URL` is baked in at build time (no runtime fallback). The
+`Dockerfile` defaults it to `/api/v1` (same origin) and bundles a `Caddyfile`
+that serves `dist/` with an SPA fallback and proxies `/api` to the backend; the
+full stack is `../freelance-all/deploy/docker-compose.prod.yml`.
 
 ## Known simplifications (see CLAUDE.md for the full list)
 

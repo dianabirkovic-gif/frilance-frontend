@@ -1,0 +1,97 @@
+.editor {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--ink-800);
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px;
+  border-bottom: 1px solid var(--line);
+  background: var(--ink-700);
+}
+
+.tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.tool:hover {
+  color: var(--text-1);
+  background: var(--ink-800);
+}
+
+.tool:focus-visible {
+  outline: 2px solid var(--brand-400);
+  outline-offset: -1px;
+}
+
+.toolActive {
+  color: var(--brand-400);
+  border-color: var(--line);
+  background: var(--ink-800);
+}
+
+.divider {
+  width: 1px;
+  height: 18px;
+  margin: 0 4px;
+  background: var(--line);
+}
+
+.content {
+  min-height: 0;
+}
+
+/* The contenteditable itself — TipTap puts this class on the element it owns,
+   so it is styled here rather than on a React-rendered node. "Large field" is
+   the requirement: it opens roomy and grows, with a ceiling so the drawer's
+   own scroll takes over instead of the footer being pushed off screen. */
+.surface {
+  display: block;
+  min-height: 140px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-1);
+}
+
+.surface:focus {
+  outline: 2px solid var(--brand-400);
+  outline-offset: -1px;
+}
+
+.surface p {
+  margin: 0 0 8px;
+}
+
+.surface p:last-child {
+  margin-bottom: 0;
+}
+
+.surface ul,
+.surface ol {
+  margin: 0 0 8px;
+  padding-left: 20px;
+}
+
+.surface li {
+  margin-bottom: 2px;
+}

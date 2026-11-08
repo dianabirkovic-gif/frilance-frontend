@@ -2,7 +2,11 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import type { AppSection } from "../../api/auth";
-import { visibleMobileTabItems, visibleNavGroups } from "../../config/navItems/navItems";
+import {
+  visibleMobileTabItems,
+  visibleMobileTrailingTabItems,
+  visibleNavGroups,
+} from "../../config/navItems/navItems";
 import { LocaleProvider } from "../../i18n/LocaleProvider";
 import { uk } from "../../i18n/locales/uk";
 import { PageFabProvider } from "../../templates/AppShell/PageFabContext";
@@ -23,7 +27,7 @@ function renderTabBar(
           <MobileTabBar
             navGroups={visibleNavGroups(canView, canManageTeam)}
             tabItems={visibleMobileTabItems(canView, canManageTeam)}
-            canViewFinance={canView("FINANCE")}
+            trailingTabItems={visibleMobileTrailingTabItems(canView, canManageTeam)}
           />
         </PageFabProvider>
       </MemoryRouter>
@@ -51,7 +55,7 @@ describe("MobileTabBar", () => {
       .closest("div")!)).toBe(false);
   });
 
-  it("opens a menu with Team as a real link and the unbuilt modules disabled", () => {
+  it("opens a menu with the built modules as real links and the unbuilt ones disabled", () => {
     renderTabBar();
 
     fireEvent.click(screen.getByRole("button", { name: uk.mobileTabBar.moreTab }));
@@ -60,14 +64,30 @@ describe("MobileTabBar", () => {
     const teamLink = screen.getByRole("link", { name: uk.nav.items.team });
     expect(teamLink).toHaveAttribute("href", "/team");
     expect(isOpenClass(teamLink.closest("div")!)).toBe(true);
-    expect(screen.getByText(uk.nav.items.content)).toHaveAttribute("aria-disabled", "true");
+    // The content plan is the mobile route reached from here rather than from
+    // a pinned tab — a real link, unlike the modules that aren't built yet.
+    expect(screen.getByRole("link", { name: uk.nav.items.content })).toHaveAttribute("href", "/content");
+    expect(screen.getByText(uk.nav.items.target)).toHaveAttribute("aria-disabled", "true");
+    // Фінанси is pinned after the FAB, so it is never in this menu.
+    expect(screen.queryAllByRole("link", { name: uk.nav.items.finance })).toHaveLength(1);
+  });
+
+  /**
+   * The trailing slot after the FAB. It was a disabled placeholder for as long
+   * as the module was unbuilt; it is a route now, and it comes from
+   * `config/navItems` like every other tab rather than being hardcoded here.
+   */
+  it("pins Фінанси as a real tab after the FAB", () => {
+    renderTabBar();
+
+    expect(screen.getByRole("link", { name: uk.nav.items.finance })).toHaveAttribute("href", "/finance");
   });
 
   it("leaves out the sections the owner granted no access to", () => {
     renderTabBar((section) => section !== "CLIENTS" && section !== "FINANCE");
 
     expect(screen.queryByText(uk.nav.items.clients)).not.toBeInTheDocument();
-    expect(screen.queryByText(uk.mobileTabBar.financeTab)).not.toBeInTheDocument();
+    expect(screen.queryByText(uk.nav.items.finance)).not.toBeInTheDocument();
 
     // Granted sections still show, as does Overview — the landing screen
     // nobody has to be granted. Team is there because this member is an owner.

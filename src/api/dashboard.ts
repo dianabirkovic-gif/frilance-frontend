@@ -1,4 +1,12 @@
 import { apiRequest } from "./client";
+import type { PostStatus } from "./contentPlan";
+
+/**
+ * The weekly strip is five days of the content plan, so its status taxonomy
+ * is the content plan's — re-exported rather than restated so the two can't
+ * drift (`api/contentPlan.ts` owns it, alongside the cycle order).
+ */
+export type { PostStatus };
 
 /** Mirrors DashboardOverviewResponse and its nested records on the backend exactly — keep in sync. */
 /**
@@ -43,8 +51,6 @@ export interface AttentionItem {
   metaLabel: string;
   metaIsDanger: boolean;
 }
-
-export type PostStatus = "DRAFT" | "REVIEW" | "READY" | "PUBLISHED";
 
 export interface ContentPlanDay {
   dayLabel: string;

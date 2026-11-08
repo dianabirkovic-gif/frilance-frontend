@@ -7,6 +7,8 @@ import { LoginPage } from "./pages/LoginPage/LoginPage";
 import { ClaimInvitePage } from "./pages/ClaimInvitePage/ClaimInvitePage";
 import { DashboardPage } from "./pages/DashboardPage/DashboardPage";
 import { ClientsPage } from "./pages/ClientsPage/ClientsPage";
+import { ContentPlanPage } from "./pages/ContentPlanPage/ContentPlanPage";
+import { FinancePage } from "./pages/FinancePage/FinancePage";
 import { TeamPage } from "./pages/TeamPage/TeamPage";
 
 /**
@@ -30,6 +32,22 @@ export const router = createBrowserRouter([
         element: (
           <RequireSection section="CLIENTS">
             <ClientsPage />
+          </RequireSection>
+        ),
+      },
+      {
+        path: "content",
+        element: (
+          <RequireSection section="CONTENT">
+            <ContentPlanPage />
+          </RequireSection>
+        ),
+      },
+      {
+        path: "finance",
+        element: (
+          <RequireSection section="FINANCE">
+            <FinancePage />
           </RequireSection>
         ),
       },

@@ -3,7 +3,7 @@ import { Panel } from "../../molecules/Panel/Panel";
 import type { Revenue } from "../../api/dashboard";
 import { interpolate } from "../../i18n/interpolate";
 import { useLocale } from "../../i18n/useLocale";
-import { buildAreaPath, buildSmoothLinePath, scaleToViewBox } from "./chartPath";
+import { buildAreaPath, buildSmoothLinePath, scaleToViewBox } from "../../utils/chartPath";
 import styles from "./RevenueHero.module.css";
 
 const CURRENCY_FORMAT = new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 0 });
