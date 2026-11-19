@@ -20,6 +20,10 @@ const sample: ClientDetail = {
   contactPhone: "+380501234567",
   contactEmail: "natalia@example.com",
   stage: "REPORT",
+  revenueScope: "AGENCY",
+  tariffPlan: null,
+  cooperationStartDate: null,
+  serviceCost: null,
   activity: [{ timeLabel: "2 год тому", actorInitials: "ОК", actorName: "Оксана", description: "Опублікувала Reels" }],
 };
 
@@ -39,11 +43,15 @@ function renderDrawer(props: Partial<DrawerProps> = {}) {
         isLoading={false}
         isError={false}
         isArchiving={false}
+        isDeleting={false}
         canEdit
+        canManageClient
+        onEdit={vi.fn()}
         assignableMembers={members}
         onSaveAssignees={vi.fn().mockResolvedValue(undefined)}
         onClose={vi.fn()}
         onArchive={vi.fn()}
+        onDelete={vi.fn()}
         {...props}
       />
     </LocaleProvider>,
@@ -115,11 +123,15 @@ describe("ClientDetailDrawer", () => {
           isLoading={false}
           isError={false}
           isArchiving={false}
+          isDeleting={false}
           assignableMembers={members}
       onSaveAssignees={vi.fn().mockResolvedValue(undefined)}
       canEdit
+      canManageClient
+      onEdit={vi.fn()}
           onClose={vi.fn()}
           onArchive={vi.fn()}
+          onDelete={vi.fn()}
         />
       </LocaleProvider>,
     );
@@ -141,11 +153,15 @@ describe("ClientDetailDrawer", () => {
           isLoading={false}
           isError={false}
           isArchiving={false}
+          isDeleting={false}
           assignableMembers={members}
       onSaveAssignees={vi.fn().mockResolvedValue(undefined)}
       canEdit
+      canManageClient
+      onEdit={vi.fn()}
           onClose={vi.fn()}
           onArchive={vi.fn()}
+          onDelete={vi.fn()}
         />
       </LocaleProvider>,
     );
@@ -180,11 +196,15 @@ describe("ClientDetailDrawer", () => {
           isLoading
           isError={false}
           isArchiving={false}
+          isDeleting={false}
           assignableMembers={members}
       onSaveAssignees={vi.fn().mockResolvedValue(undefined)}
       canEdit
+      canManageClient
+      onEdit={vi.fn()}
           onClose={vi.fn()}
           onArchive={vi.fn()}
+          onDelete={vi.fn()}
         />
       </LocaleProvider>,
     );
@@ -202,11 +222,15 @@ describe("ClientDetailDrawer", () => {
           isLoading={false}
           isError={false}
           isArchiving={false}
+          isDeleting={false}
           assignableMembers={members}
       onSaveAssignees={vi.fn().mockResolvedValue(undefined)}
       canEdit
+      canManageClient
+      onEdit={vi.fn()}
           onClose={vi.fn()}
           onArchive={onArchive}
+          onDelete={vi.fn()}
         />
       </LocaleProvider>,
     );
@@ -233,11 +257,15 @@ describe("ClientDetailDrawer", () => {
           isLoading={false}
           isError={false}
           isArchiving={false}
+          isDeleting={false}
           assignableMembers={members}
       onSaveAssignees={vi.fn().mockResolvedValue(undefined)}
       canEdit
+      canManageClient
+      onEdit={vi.fn()}
           onClose={vi.fn()}
           onArchive={onArchive}
+          onDelete={vi.fn()}
         />
       </LocaleProvider>,
     );
@@ -258,11 +286,15 @@ describe("ClientDetailDrawer", () => {
           isLoading={false}
           isError={false}
           isArchiving={false}
+          isDeleting={false}
           assignableMembers={members}
       onSaveAssignees={vi.fn().mockResolvedValue(undefined)}
       canEdit
+      canManageClient
+      onEdit={vi.fn()}
           onClose={vi.fn()}
           onArchive={vi.fn()}
+          onDelete={vi.fn()}
         />
       </LocaleProvider>,
     );
@@ -279,11 +311,15 @@ describe("ClientDetailDrawer", () => {
           isLoading={false}
           isError={false}
           isArchiving={false}
+          isDeleting={false}
           assignableMembers={members}
       onSaveAssignees={vi.fn().mockResolvedValue(undefined)}
       canEdit={false}
+      canManageClient={false}
+      onEdit={vi.fn()}
           onClose={vi.fn()}
           onArchive={vi.fn()}
+          onDelete={vi.fn()}
         />
       </LocaleProvider>,
     );
@@ -342,12 +378,16 @@ describe("ClientDetailDrawer", () => {
             isLoading={false}
             isError={false}
             isArchiving={false}
+            isDeleting={false}
             canEdit
+            canManageClient
+            onEdit={vi.fn()}
             assignableMembers={members}
             contentTab={<Probe />}
             onSaveAssignees={vi.fn().mockResolvedValue(undefined)}
             onClose={vi.fn()}
             onArchive={vi.fn()}
+            onDelete={vi.fn()}
           />
         </LocaleProvider>
       );
@@ -364,6 +404,99 @@ describe("ClientDetailDrawer", () => {
       expect(mounted).toHaveBeenCalledTimes(1);
       expect(screen.queryByText("Контент-план клієнта")).not.toBeInTheDocument();
       expect(screen.getByText(uk.clientDetailDrawer.sectionAssignees)).toBeInTheDocument();
+    });
+  });
+
+  describe("who may edit the card", () => {
+    it("offers «Редагувати» and archive only to whoever owns the agency", () => {
+      const onEdit = vi.fn();
+      renderDrawer({ canManageClient: true, onEdit });
+
+      fireEvent.click(screen.getByRole("button", { name: uk.clientDetailDrawer.editClient }));
+      expect(onEdit).toHaveBeenCalled();
+      expect(screen.getByRole("button", { name: uk.clientDetailDrawer.archiveIdle })).toBeInTheDocument();
+    });
+
+    /** Full Clients access still staffs and annotates a client — it does not edit its terms. */
+    it("hides both from a member even with full Clients access", () => {
+      renderDrawer({ canEdit: true, canManageClient: false });
+
+      expect(screen.queryByRole("button", { name: uk.clientDetailDrawer.editClient })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: uk.clientDetailDrawer.archiveIdle })).not.toBeInTheDocument();
+      expect(screen.getByText(uk.clientDetailDrawer.editAssignees)).toBeInTheDocument();
+    });
+
+    it("labels a member's figure as their own income, not the client's revenue", () => {
+      renderDrawer({ detail: { ...sample, revenueScope: "PERSONAL", monthlyRevenue: 10000 } });
+
+      expect(screen.getByText(uk.clientDetailDrawer.statRevenueLabelPersonal)).toBeInTheDocument();
+      expect(screen.queryByText(uk.clientDetailDrawer.statRevenueLabel)).not.toBeInTheDocument();
+    });
+  });
+
+  describe("deleting a client", () => {
+    /** Deleting takes a lot with it: it must not be one click, and it must say what goes. */
+    it("asks first, saying it goes to the trash and for how long, and does nothing until confirmed", () => {
+      const onDelete = vi.fn().mockResolvedValue(undefined);
+      renderDrawer({ onDelete });
+
+      fireEvent.click(screen.getByRole("button", { name: uk.clientDetailDrawer.deleteIdle }));
+
+      const dialog = screen.getByRole("alertdialog");
+      expect(within(dialog).getByText(uk.clientDetailDrawer.deleteConfirmTitle)).toBeInTheDocument();
+      // Not "permanent": the client goes to the trash and can be restored from there.
+      expect(dialog).toHaveTextContent("кошика");
+      expect(dialog).toHaveTextContent("30 дн.");
+      expect(dialog).toHaveTextContent("відновити");
+      expect(onDelete).not.toHaveBeenCalled();
+    });
+
+    it("deletes the client and closes the drawer once confirmed", async () => {
+      const onDelete = vi.fn().mockResolvedValue(undefined);
+      const onClose = vi.fn();
+      renderDrawer({ onDelete, onClose });
+
+      fireEvent.click(screen.getByRole("button", { name: uk.clientDetailDrawer.deleteIdle }));
+      fireEvent.click(
+        within(screen.getByRole("alertdialog")).getByRole("button", { name: uk.clientDetailDrawer.deleteConfirmLabel }),
+      );
+
+      await waitFor(() => expect(onDelete).toHaveBeenCalledWith("1"));
+      await waitFor(() => expect(onClose).toHaveBeenCalled());
+    });
+
+    it("does not delete when cancelled", () => {
+      const onDelete = vi.fn();
+      renderDrawer({ onDelete });
+
+      fireEvent.click(screen.getByRole("button", { name: uk.clientDetailDrawer.deleteIdle }));
+      fireEvent.click(
+        within(screen.getByRole("alertdialog")).getByRole("button", { name: uk.confirmationDialog.cancelLabel }),
+      );
+
+      expect(onDelete).not.toHaveBeenCalled();
+    });
+
+    it("keeps the drawer open and says so when the server refuses", async () => {
+      const alert = vi.spyOn(window, "alert").mockImplementation(() => {});
+      const onClose = vi.fn();
+      renderDrawer({ onDelete: vi.fn().mockRejectedValue(new Error("boom")), onClose });
+
+      fireEvent.click(screen.getByRole("button", { name: uk.clientDetailDrawer.deleteIdle }));
+      fireEvent.click(
+        within(screen.getByRole("alertdialog")).getByRole("button", { name: uk.clientDetailDrawer.deleteConfirmLabel }),
+      );
+
+      await waitFor(() => expect(alert).toHaveBeenCalledWith(uk.clientDetailDrawer.deleteErrorFallback));
+      expect(onClose).not.toHaveBeenCalled();
+      alert.mockRestore();
+    });
+
+    /** Only the owner may delete (the backend refuses anyone else): the button is not offered, not 403'd. */
+    it("offers no delete action to anyone who cannot manage the client", () => {
+      renderDrawer({ canManageClient: false });
+
+      expect(screen.queryByRole("button", { name: uk.clientDetailDrawer.deleteIdle })).not.toBeInTheDocument();
     });
   });
 });

@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import type { ClientAssignee, ClientStage, ClientStatus, CreateClientPayload } from "../../api/clients";
+import type {
+  ClientAssignee,
+  ClientDetail,
+  ClientStage,
+  ClientStatus,
+  CreateClientPayload,
+} from "../../api/clients";
 import { CLIENT_STAGE_ORDER } from "../../api/clients";
 import { ApiError } from "../../api/client";
 import { CloseIcon } from "../../atoms/icons/icons";
@@ -28,6 +34,12 @@ interface AddClientDrawerProps {
   open: boolean;
   /** The tenant's members, for staffing the client. Empty for a solo freelancer. */
   assignableMembers: ClientAssignee[];
+  /**
+   * Set to open the same form on an existing client — every field editable, and
+   * the whole of it sent back. Owner-only (the backend refuses anyone else), so
+   * the page only ever passes it for the owner. Omitted, the drawer creates.
+   */
+  client?: ClientDetail | null;
   isSubmitting: boolean;
   onSubmit: (payload: CreateClientPayload) => Promise<unknown>;
   onClose: () => void;
@@ -41,6 +53,7 @@ interface AddClientDrawerProps {
 export function AddClientDrawer({
   open,
   assignableMembers,
+  client = null,
   isSubmitting,
   onSubmit,
   onClose,
@@ -59,11 +72,27 @@ export function AddClientDrawer({
   );
 
   useEffect(() => {
-    if (open) {
-      setForm(EMPTY_FORM);
-      setError(null);
-    }
-  }, [open]);
+    if (!open) return;
+    setError(null);
+    setForm(
+      client
+        ? {
+            name: client.name,
+            niche: client.niche ?? "",
+            tariffPlan: client.tariffPlan ?? "",
+            cooperationStartDate: client.cooperationStartDate ?? "",
+            serviceCost: client.serviceCost === null ? "" : String(client.serviceCost),
+            status: client.status,
+            contactName: client.contactName ?? "",
+            contactRole: client.contactRole ?? "",
+            contactPhone: client.contactPhone ?? "",
+            contactEmail: client.contactEmail ?? "",
+            stage: client.stage,
+            assigneeIds: client.assignees.map((member) => member.id),
+          }
+        : EMPTY_FORM,
+    );
+  }, [open, client]);
 
   function toggleAssignee(id: string) {
     setForm((current) => ({
@@ -104,7 +133,7 @@ export function AddClientDrawer({
         <div className={styles.handle} />
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.header}>
-            <div className={styles.title}>{t.addClientDrawer.title}</div>
+            <div className={styles.title}>{client ? t.addClientDrawer.editTitle : t.addClientDrawer.title}</div>
             <button type="button" className={styles.closeBtn} onClick={onClose} aria-label={t.addClientDrawer.close}>
               <CloseIcon width={14} height={14} />
             </button>
@@ -250,7 +279,13 @@ export function AddClientDrawer({
 
           <div className={styles.footer}>
             <button type="submit" className={styles.submit} disabled={isSubmitting}>
-              {isSubmitting ? t.addClientDrawer.submitLoading : t.addClientDrawer.submitIdle}
+              {client
+                ? isSubmitting
+                  ? t.addClientDrawer.editSubmitLoading
+                  : t.addClientDrawer.editSubmitIdle
+                : isSubmitting
+                  ? t.addClientDrawer.submitLoading
+                  : t.addClientDrawer.submitIdle}
             </button>
           </div>
         </form>

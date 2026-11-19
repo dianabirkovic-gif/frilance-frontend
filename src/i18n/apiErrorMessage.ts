@@ -10,6 +10,10 @@ const LOCALIZED_CODES: Record<string, keyof Dictionary["apiError"]> = {
   CLIENT_COMPLETED: "clientCompleted",
   NOTE_TOO_LONG: "noteTooLong",
   DUE_BEFORE_ISSUE: "dueBeforeIssue",
+  FILE_TOO_LARGE: "fileTooLarge",
+  UNSUPPORTED_FILE_TYPE: "unsupportedFileType",
+  INVALID_CAMPAIGN_STAT: "invalidCampaignStat",
+  INVALID_CAMPAIGN_PERIOD: "invalidCampaignPeriod",
 };
 
 /**

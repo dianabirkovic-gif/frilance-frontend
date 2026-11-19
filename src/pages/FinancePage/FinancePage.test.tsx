@@ -42,6 +42,7 @@ function entry(overrides: Partial<FinanceEntry> = {}): FinanceEntry {
     paymentMethod: "CARD",
     invoiceNumber: "0142",
     carriedOver: false,
+    recipientUserId: null,
     ...overrides,
   };
 }
@@ -52,6 +53,7 @@ function finance(month: string, entries: FinanceEntry[] = []): Finance {
     currency: "UAH",
     selectedClientId: null,
     selectedType: null,
+    members: [],
     clients: [
       { id: "client-1", name: "MUSE'23" },
       { id: "client-2", name: "Brookside Wellness" },

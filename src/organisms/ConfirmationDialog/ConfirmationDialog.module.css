@@ -92,6 +92,15 @@
   background: var(--brand-600);
 }
 
+.confirmBtn.confirmDanger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.confirmBtn.confirmDanger:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
 .confirmBtn:disabled,
 .cancelBtn:disabled {
   opacity: 0.6;

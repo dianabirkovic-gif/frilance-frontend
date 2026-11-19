@@ -212,7 +212,8 @@
 }
 
 .field input,
-.field select {
+.field select,
+.field textarea {
   font: inherit;
   color: var(--text-1);
   background: var(--ink-800);
@@ -223,13 +224,19 @@
 }
 
 .field input:focus,
-.field select:focus {
+.field select:focus,
+.field textarea:focus {
   outline: 2px solid var(--brand-400);
   outline-offset: -1px;
 }
 
 /* Under the note editor: what the field is for. Quiet — it is guidance, not
    something the form is telling you to fix. */
+.field textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+
 .hint {
   font-size: 11.5px;
   line-height: 1.4;

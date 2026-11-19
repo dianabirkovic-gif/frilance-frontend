@@ -6,6 +6,7 @@ import {
   type FinanceClient,
   type FinanceEntry,
   type FinanceEntryType,
+  type FinanceMember,
   type PaymentMethod,
   type PaymentStatus,
   type UpdateFinanceEntryPayload,
@@ -21,6 +22,8 @@ interface FinanceEntryDrawerProps {
   /** The operation being edited, or null when creating a new one. */
   entry: FinanceEntry | null;
   clients: FinanceClient[];
+  /** Active team members a payout can be addressed to. */
+  members: FinanceMember[];
   /** Pre-selected when the page has a client filter on. */
   defaultClientId: string | null;
   /** The month on screen — a new operation lands in it rather than in today's, if they differ. */
@@ -52,6 +55,7 @@ export function FinanceEntryDrawer({
   open,
   entry,
   clients,
+  members,
   defaultClientId,
   defaultDate,
   isSubmitting,
@@ -69,6 +73,7 @@ export function FinanceEntryDrawer({
     amount: "",
     clientId: "",
     counterparty: "",
+    recipientUserId: "",
     entryDate: defaultDate,
     dueDate: "",
     paymentStatus: "PAID" as PaymentStatus,
@@ -106,6 +111,7 @@ export function FinanceEntryDrawer({
             amount: String(entry.amount),
             clientId: entry.clientId ?? "",
             counterparty: entry.counterparty ?? "",
+            recipientUserId: entry.recipientUserId ?? "",
             entryDate: entry.entryDate,
             dueDate: entry.dueDate ?? "",
             paymentStatus: entry.paymentStatus,
@@ -119,6 +125,7 @@ export function FinanceEntryDrawer({
             amount: "",
             clientId: "",
             counterparty: "",
+            recipientUserId: "",
             entryDate: defaultDate,
             dueDate: "",
             paymentStatus: "PAID",
@@ -149,6 +156,9 @@ export function FinanceEntryDrawer({
         description: form.description.trim() || null,
         clientId: form.clientId || null,
         counterparty: form.counterparty.trim() || null,
+        // Sent for a payout only — the backend refuses a recipient on any
+        // other type, and a stale pick must not survive a change of type.
+        recipientUserId: form.type === "PAYOUT" && form.recipientUserId ? form.recipientUserId : null,
         paymentStatus: form.paymentStatus,
         paymentMethod: form.paymentMethod,
         dueDate: form.dueDate || null,
@@ -307,15 +317,39 @@ export function FinanceEntryDrawer({
               </select>
             </label>
 
-            <label className={styles.field}>
-              <span>{t.financeEntryDrawer.fields.counterparty}</span>
-              <input
-                type="text"
-                value={form.counterparty}
-                onChange={(event) => setForm({ ...form, counterparty: event.target.value })}
-              />
-              <span className={styles.hint}>{t.financeEntryDrawer.counterpartyHint}</span>
-            </label>
+            {/* A payout to a team member is the one thing that puts a row on
+                somebody's «Моя зп», so it is a pick from the roster rather
+                than free text. Choosing a member makes the name field moot —
+                the server writes their name into «Отримувач» itself. */}
+            {form.type === "PAYOUT" && (
+              <label className={styles.field}>
+                <span>{t.financeEntryDrawer.fields.recipient}</span>
+                <select
+                  value={form.recipientUserId}
+                  onChange={(event) => setForm({ ...form, recipientUserId: event.target.value })}
+                >
+                  <option value="">{t.financeEntryDrawer.recipientNone}</option>
+                  {members.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.name}
+                    </option>
+                  ))}
+                </select>
+                <span className={styles.hint}>{t.financeEntryDrawer.recipientHint}</span>
+              </label>
+            )}
+
+            {!(form.type === "PAYOUT" && form.recipientUserId) && (
+              <label className={styles.field}>
+                <span>{t.financeEntryDrawer.fields.counterparty}</span>
+                <input
+                  type="text"
+                  value={form.counterparty}
+                  onChange={(event) => setForm({ ...form, counterparty: event.target.value })}
+                />
+                <span className={styles.hint}>{t.financeEntryDrawer.counterpartyHint}</span>
+              </label>
+            )}
 
             <div className={styles.row}>
               <label className={styles.field}>

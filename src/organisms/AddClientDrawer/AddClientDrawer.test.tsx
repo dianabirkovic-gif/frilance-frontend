@@ -127,4 +127,63 @@ describe("AddClientDrawer", () => {
 
     expect(screen.getByRole("button", { name: uk.addClientDrawer.submitLoading })).toBeDisabled();
   });
+
+  /** The same form, opened on an existing client: every field starts from what it has and is sent back whole. */
+  it("edits an existing client with every field pre-filled and sends them all back", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    render(
+      <LocaleProvider>
+        <AddClientDrawer
+          open
+          client={{
+            id: "c1",
+            name: "MUSE'23",
+            niche: "Beauty",
+            assignees: [members[0]],
+            status: "ACTIVE",
+            monthlyRevenue: 50000,
+            revenueScope: "AGENCY",
+            cooperationDurationLabel: "8 міс",
+            contactName: "Наталія",
+            contactRole: "Засновниця",
+            contactPhone: "+380501234567",
+            contactEmail: "n@example.com",
+            stage: "WORK_STARTED",
+            activity: [],
+            tariffPlan: "Standard",
+            cooperationStartDate: "2026-01-15",
+            serviceCost: 50000,
+          }}
+          assignableMembers={members}
+          isSubmitting={false}
+          onSubmit={onSubmit}
+          onClose={vi.fn()}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(screen.getByText(uk.addClientDrawer.editTitle)).toBeInTheDocument();
+    expect(screen.getByLabelText(uk.addClientDrawer.fields.tariffPlan)).toHaveValue("Standard");
+    expect(screen.getByLabelText(uk.addClientDrawer.fields.startDate)).toHaveValue("2026-01-15");
+
+    fireEvent.change(screen.getByLabelText(uk.addClientDrawer.fields.name), { target: { value: "MUSE'24" } });
+    fireEvent.click(screen.getByRole("button", { name: uk.addClientDrawer.editSubmitIdle }));
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "MUSE'24",
+        niche: "Beauty",
+        tariffPlan: "Standard",
+        cooperationStartDate: "2026-01-15",
+        serviceCost: 50000,
+        status: "ACTIVE",
+        contactName: "Наталія",
+        contactRole: "Засновниця",
+        contactPhone: "+380501234567",
+        contactEmail: "n@example.com",
+        stage: "WORK_STARTED",
+        assigneeIds: ["u1"],
+      }),
+    );
+  });
 });

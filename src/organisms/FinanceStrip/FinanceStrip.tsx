@@ -14,13 +14,14 @@ const COLOR_VAR: Record<string, string> = {
 /** Empty `rows` means the current role has no finance access — FR-09/FR-03 RBAC, enforced server-side. */
 export function FinanceStrip({ summary }: { summary: FinanceSummary }) {
   const { t } = useLocale();
+  const isPersonal = summary.scope === "PERSONAL";
   return (
     <Panel className={styles.panel}>
       <div className={styles.head}>
-        <div className={styles.title}>{t.financeStrip.title}</div>
+        <div className={styles.title}>{isPersonal ? t.financeStrip.personalTitle : t.financeStrip.title}</div>
       </div>
       {summary.rows.length === 0 ? (
-        <div className={styles.empty}>{t.financeStrip.noAccess}</div>
+        <div className={styles.empty}>{isPersonal ? t.financeStrip.personalEmpty : t.financeStrip.noAccess}</div>
       ) : (
         summary.rows.map((row) => (
           <div className={styles.row} key={row.label}>

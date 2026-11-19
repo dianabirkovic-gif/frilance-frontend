@@ -13,6 +13,7 @@ const sample: ClientListItem = {
   status: "ACTIVE",
   nextPostLabel: "Пн, Reels",
   monthlyRevenue: 32000,
+    revenueScope: "AGENCY",
   lastActivityLabel: "2 год тому",
 };
 

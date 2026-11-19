@@ -60,6 +60,12 @@ export interface ContentPlanDay {
 }
 
 export interface FinanceSummary {
+  /**
+   * Whose money the rows are. `AGENCY` is the owner's picture of the business;
+   * `PERSONAL` is a team member's own pay — they are never sent `AGENCY`.
+   * `PERSONAL` with no rows means no payouts this month.
+   */
+  scope: "AGENCY" | "PERSONAL";
   rows: FinanceRow[];
 }
 

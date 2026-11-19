@@ -24,6 +24,7 @@ function entry(overrides: Partial<FinanceEntry> = {}): FinanceEntry {
     paymentMethod: "CARD",
     invoiceNumber: "0142",
     carriedOver: false,
+    recipientUserId: null,
     ...overrides,
   };
 }

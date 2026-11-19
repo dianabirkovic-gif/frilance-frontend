@@ -24,6 +24,7 @@ function entry(overrides: Partial<FinanceEntry> = {}): FinanceEntry {
     paymentMethod: "INVOICE",
     invoiceNumber: "0144",
     carriedOver: false,
+    recipientUserId: null,
     ...overrides,
   };
 }
@@ -37,6 +38,7 @@ function renderDrawer(overrides: Partial<Parameters<typeof FinanceEntryDrawer>[0
       { id: "client-2", name: "Brookside Wellness" },
     ],
     defaultClientId: null,
+    members: [{ id: "member-1", name: "Оксана" }],
     defaultDate: "2026-07-15",
     isSubmitting: false,
     isMarkingPaid: false,
@@ -155,5 +157,43 @@ describe("FinanceEntryDrawer", () => {
 
     renderDrawer({ entry: entry() });
     expect(screen.getByRole("button", { name: uk.financeEntryDrawer.deleteLabel })).toBeInTheDocument();
+  });
+
+  /** The recipient picker is what puts a payout on a member's «Моя зп». */
+  it("offers a team-member recipient for a payout and sends it", async () => {
+    const props = renderDrawer();
+    // substring match: the recipient label also carries its hint text
+    const field = (label: string) => screen.getByLabelText(label, { exact: false });
+
+    expect(screen.queryByLabelText(uk.financeEntryDrawer.fields.recipient, { exact: false })).not.toBeInTheDocument();
+
+    fireEvent.change(field(uk.financeEntryDrawer.fields.type), { target: { value: "PAYOUT" } });
+    fireEvent.change(field(uk.financeEntryDrawer.fields.recipient), { target: { value: "member-1" } });
+    fireEvent.change(field(uk.financeEntryDrawer.fields.title), { target: { value: "Зарплата" } });
+    fireEvent.change(field(uk.financeEntryDrawer.fields.amount), { target: { value: "20000" } });
+    fireEvent.click(screen.getByRole("button", { name: uk.financeEntryDrawer.submitIdle }));
+
+    await waitFor(() =>
+      expect(props.onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "PAYOUT", recipientUserId: "member-1" }),
+      ),
+    );
+  });
+
+  it("never sends a recipient on a type other than a payout", async () => {
+    const props = renderDrawer();
+    // substring match: the recipient label also carries its hint text
+    const field = (label: string) => screen.getByLabelText(label, { exact: false });
+
+    fireEvent.change(field(uk.financeEntryDrawer.fields.type), { target: { value: "PAYOUT" } });
+    fireEvent.change(field(uk.financeEntryDrawer.fields.recipient), { target: { value: "member-1" } });
+    fireEvent.change(field(uk.financeEntryDrawer.fields.type), { target: { value: "EXPENSE" } });
+    fireEvent.change(field(uk.financeEntryDrawer.fields.title), { target: { value: "Meta Ads" } });
+    fireEvent.change(field(uk.financeEntryDrawer.fields.amount), { target: { value: "3400" } });
+    fireEvent.click(screen.getByRole("button", { name: uk.financeEntryDrawer.submitIdle }));
+
+    await waitFor(() =>
+      expect(props.onSubmit).toHaveBeenCalledWith(expect.objectContaining({ recipientUserId: null })),
+    );
   });
 });

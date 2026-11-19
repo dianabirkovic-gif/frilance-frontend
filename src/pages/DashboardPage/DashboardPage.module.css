@@ -24,6 +24,24 @@
   }
 }
 
+.gridHeroSingle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.gridStripPair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+@media (min-width: 900px) {
+  .gridStripPair {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 20px;
+  }
+}
+
 .gridStrip {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

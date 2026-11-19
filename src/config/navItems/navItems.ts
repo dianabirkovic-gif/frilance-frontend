@@ -30,6 +30,12 @@ export interface NavItem {
    * AuthProvider. Hidden from everyone else, the same way a NONE section is.
    */
   ownerOnly?: boolean;
+  /**
+   * Hidden from the people who own the tenant (OWNER, FREELANCER): they pay
+   * salaries, they are not paid one. Everyone invited into a team sees it
+   * whatever their section grants say — it is their own pay, not a section.
+   */
+  memberOnly?: boolean;
   badge?: number;
   danger?: boolean;
 }
@@ -40,7 +46,7 @@ export interface NavGroup {
 }
 
 /**
- * Overview, Clients, the content plan and Фінанси have real routes; the rest
+ * Overview, Clients, the content plan, Таргет and Фінанси have real routes; the rest
  * are placeholders. Add a `path` here the same release you add the route in
  * router.tsx — see frontend CLAUDE.md "Adding a new module".
  */
@@ -51,13 +57,14 @@ export const NAV_GROUPS: NavGroup[] = [
       { labelKey: "overview", icon: OverviewIcon, path: "/" },
       { labelKey: "clients", icon: ClientsIcon, path: "/clients", section: "CLIENTS" },
       { labelKey: "content", icon: ContentIcon, path: "/content", section: "CONTENT" },
-      { labelKey: "target", icon: TargetIcon, section: "TARGET" },
+      { labelKey: "target", icon: TargetIcon, path: "/target", section: "TARGET" },
     ],
   },
   {
     labelKey: "business",
     items: [
       { labelKey: "finance", icon: FinanceIcon, path: "/finance", section: "FINANCE" },
+      { labelKey: "mySalary", icon: FinanceIcon, path: "/my-salary", memberOnly: true },
       { labelKey: "reports", icon: ReportsIcon },
       { labelKey: "analytics", icon: AnalyticsIcon, section: "ANALYTICS" },
       { labelKey: "team", icon: TeamIcon, path: "/team", ownerOnly: true },
@@ -96,10 +103,11 @@ export const MOBILE_TRAILING_TAB_ITEMS: NavItem[] = [
 export function visibleNavGroups(
   canView: (section: AppSection) => boolean,
   canManageTeam: boolean,
+  isTeamMember = true,
 ): NavGroup[] {
   return NAV_GROUPS.map((group) => ({
     ...group,
-    items: group.items.filter((item) => isVisible(item, canView, canManageTeam)),
+    items: group.items.filter((item) => isVisible(item, canView, canManageTeam, isTeamMember)),
   })).filter((group) => group.items.length > 0);
 }
 
@@ -121,8 +129,12 @@ function isVisible(
   item: NavItem,
   canView: (section: AppSection) => boolean,
   canManageTeam: boolean,
+  isTeamMember = true,
 ): boolean {
   if (item.ownerOnly && !canManageTeam) {
+    return false;
+  }
+  if (item.memberOnly && !isTeamMember) {
     return false;
   }
   return !item.section || canView(item.section);

@@ -207,6 +207,7 @@ export function FinancePage() {
           open={isDrawerOpen}
           entry={editingEntry}
           clients={clients}
+          members={data?.members ?? []}
           defaultClientId={selectedClientId}
           defaultDate={defaultDateFor(month, today)}
           isSubmitting={createEntry.isPending || updateEntry.isPending}

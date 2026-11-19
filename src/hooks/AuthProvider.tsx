@@ -29,6 +29,13 @@ interface AuthContextValue {
    * become a field on `/auth/me` rather than a longer condition.
    */
   canManageTeam: boolean;
+  /**
+   * Owns the tenant — an OWNER, or a FREELANCER who is their own agency. The
+   * people who may edit a client's terms and see what it earns the agency;
+   * everyone else sees only their own part. Mirrors the backend's
+   * `RoleAccessPolicy.Access#ownsTenant`.
+   */
+  ownsTenant: boolean;
   login: (email: string, password: string) => Promise<authApi.AuthResponse>;
   claimInvite: (email: string, token: string, password: string) => Promise<authApi.AuthResponse>;
   logout: () => void;
@@ -133,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const canView = useCallback((section: AppSection) => user?.access?.[section] !== "NONE" && !!user?.access, [user]);
   const canEdit = useCallback((section: AppSection) => user?.access?.[section] === "FULL", [user]);
   const canManageTeam = user?.role === "OWNER";
+  const ownsTenant = user?.role === "OWNER" || user?.role === "FREELANCER";
 
   return (
     <AuthContext.Provider
@@ -144,6 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         canView,
         canEdit,
         canManageTeam,
+        ownsTenant,
         login,
         claimInvite,
         logout,

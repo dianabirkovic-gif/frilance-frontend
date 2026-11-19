@@ -80,7 +80,10 @@ export async function apiRequest<TResponse>(path: string, options: RequestOption
   const { method = "GET", body, auth = true } = options;
 
   const headers: Record<string, string> = {};
-  if (body !== undefined) {
+  // A FormData body is sent as-is: the browser must set the multipart boundary
+  // itself, so a hand-written Content-Type here would break the upload.
+  const isFormData = body instanceof FormData;
+  if (body !== undefined && !isFormData) {
     headers["Content-Type"] = "application/json";
   }
   if (auth) {
@@ -93,7 +96,7 @@ export async function apiRequest<TResponse>(path: string, options: RequestOption
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
     headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
   });
 
   if (!response.ok) {
@@ -111,4 +114,25 @@ export async function apiRequest<TResponse>(path: string, options: RequestOption
   }
 
   return (await response.json()) as TResponse;
+}
+
+/**
+ * A protected binary — a download behind the bearer token, which a plain
+ * `<a href>` cannot send. Same error mapping as `apiRequest`.
+ */
+export async function apiRequestBlob(path: string): Promise<Blob> {
+  const token = getStoredAccessToken();
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => null);
+    throw new ApiError(
+      response.status,
+      errorBody?.message ?? response.statusText,
+      errorBody?.code ?? null,
+      errorBody?.details ?? [],
+    );
+  }
+  return response.blob();
 }

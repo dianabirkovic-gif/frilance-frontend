@@ -10,6 +10,8 @@ interface ConfirmationDialogProps {
   confirmLabel?: string;
   cancelLabel?: string;
   isConfirming?: boolean;
+  /** `danger` for what cannot be undone: the confirm button is red, not the usual brand green. */
+  tone?: "default" | "danger";
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -32,6 +34,7 @@ export function ConfirmationDialog({
   confirmLabel,
   cancelLabel,
   isConfirming = false,
+  tone = "default",
   onConfirm,
   onCancel,
 }: ConfirmationDialogProps) {
@@ -57,7 +60,12 @@ export function ConfirmationDialog({
           <button type="button" className={styles.cancelBtn} onClick={onCancel} disabled={isConfirming}>
             {resolvedCancelLabel}
           </button>
-          <button type="button" className={styles.confirmBtn} onClick={onConfirm} disabled={isConfirming}>
+          <button
+            type="button"
+            className={tone === "danger" ? `${styles.confirmBtn} ${styles.confirmDanger}` : styles.confirmBtn}
+            onClick={onConfirm}
+            disabled={isConfirming}
+          >
             {isConfirming ? t.confirmationDialog.confirming : resolvedConfirmLabel}
           </button>
         </div>

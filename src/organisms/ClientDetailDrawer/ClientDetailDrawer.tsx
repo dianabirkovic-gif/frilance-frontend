@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import type { ClientAssignee, ClientDetail } from "../../api/clients";
 import { ApiError } from "../../api/client";
-import { CloseIcon, LockIcon, MessageIcon, PhoneIcon } from "../../atoms/icons/icons";
+import { CloseIcon, MessageIcon, PhoneIcon } from "../../atoms/icons/icons";
 import { ConfirmationDialog } from "../ConfirmationDialog/ConfirmationDialog";
 import type { ClientDetailTab } from "../../i18n/dictionary";
 import { interpolate } from "../../i18n/interpolate";
@@ -28,6 +28,9 @@ interface ClientDetailDrawerProps {
    */
   isError: boolean;
   isArchiving: boolean;
+  isDeleting: boolean;
+  /** How long a deleted client stays recoverable — the delete confirmation says so. */
+  trashRetentionDays?: number;
   /** False under a READ grant on Clients — the archive action is hidden rather than offered and 403'd. */
   canEdit: boolean;
   /** The tenant's members, for restaffing. Empty when the caller may not edit. */
@@ -40,9 +43,21 @@ interface ClientDetailDrawerProps {
    * Omitted, the tab keeps the mockup's placeholder copy.
    */
   contentTab?: ReactNode;
+  /** The «Файли» and «Нотатки» tabs, passed as elements for the same reason as `contentTab`. */
+  filesTab?: ReactNode;
+  notesTab?: ReactNode;
+  /**
+   * Owns the tenant — the only one who may edit a client's terms or archive it.
+   * Distinct from `canEdit`, which is the Clients grant and still decides who
+   * may restaff and who may add notes and files.
+   */
+  canManageClient: boolean;
+  onEdit: () => void;
   onSaveAssignees: (assigneeIds: string[]) => Promise<unknown>;
   onClose: () => void;
   onArchive: (clientId: string) => Promise<unknown>;
+  /** Removes the client for good. Only offered when `canManageClient` — the backend refuses anyone else. */
+  onDelete: (clientId: string) => Promise<unknown>;
 }
 
 /**
@@ -60,12 +75,19 @@ export function ClientDetailDrawer({
   isLoading,
   isError,
   isArchiving,
+  isDeleting,
+  trashRetentionDays = 30,
   canEdit,
   assignableMembers,
   contentTab,
+  filesTab,
+  notesTab,
+  canManageClient,
+  onEdit,
   onSaveAssignees,
   onClose,
   onArchive,
+  onDelete,
 }: ClientDetailDrawerProps) {
   const { t } = useLocale();
 
@@ -90,12 +112,19 @@ export function ClientDetailDrawer({
             key={detail.id}
             detail={detail}
             isArchiving={isArchiving}
+            isDeleting={isDeleting}
+            trashRetentionDays={trashRetentionDays}
             canEdit={canEdit}
             assignableMembers={assignableMembers}
             contentTab={contentTab}
+            filesTab={filesTab}
+            notesTab={notesTab}
+            canManageClient={canManageClient}
+            onEdit={onEdit}
             onSaveAssignees={onSaveAssignees}
             onClose={onClose}
             onArchive={onArchive}
+            onDelete={onDelete}
           />
         )}
       </div>
@@ -106,21 +135,35 @@ export function ClientDetailDrawer({
 function ClientDetailContent({
   detail,
   isArchiving,
+  isDeleting,
+  trashRetentionDays,
   canEdit,
   assignableMembers,
   contentTab,
+  filesTab,
+  notesTab,
+  canManageClient,
+  onEdit,
   onSaveAssignees,
   onClose,
   onArchive,
+  onDelete,
 }: {
   detail: ClientDetail;
   isArchiving: boolean;
+  isDeleting: boolean;
+  trashRetentionDays: number;
   canEdit: boolean;
   assignableMembers: ClientAssignee[];
   contentTab?: ReactNode;
+  filesTab?: ReactNode;
+  notesTab?: ReactNode;
+  canManageClient: boolean;
+  onEdit: () => void;
   onSaveAssignees: (assigneeIds: string[]) => Promise<unknown>;
   onClose: () => void;
   onArchive: (clientId: string) => Promise<unknown>;
+  onDelete: (clientId: string) => Promise<unknown>;
 }) {
   const { t } = useLocale();
   const [activeTab, setActiveTab] = useState<ClientDetailTab>("overview");
@@ -129,6 +172,7 @@ function ClientDetailContent({
     .join(" · ");
   const isArchived = detail.status === "ARCHIVED";
   const [confirmArchiveOpen, setConfirmArchiveOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   async function handleConfirmArchive() {
     try {
@@ -137,6 +181,18 @@ function ClientDetailContent({
     } catch (err) {
       setConfirmArchiveOpen(false);
       window.alert(err instanceof ApiError ? err.message : t.clientDetailDrawer.archiveErrorFallback);
+    }
+  }
+
+  async function handleConfirmDelete() {
+    try {
+      await onDelete(detail.id);
+      // The client is gone: there is nothing left to show in this drawer.
+      setConfirmDeleteOpen(false);
+      onClose();
+    } catch (err) {
+      setConfirmDeleteOpen(false);
+      window.alert(err instanceof ApiError ? err.message : t.clientDetailDrawer.deleteErrorFallback);
     }
   }
 
@@ -162,13 +218,27 @@ function ClientDetailContent({
           <button className={styles.qaBtn} disabled title={t.clientDetailDrawer.notImplemented}>
             {t.clientDetailDrawer.invoiceAction}
           </button>
-          {canEdit && (
+          {canManageClient && (
+            <button className={styles.qaBtn} onClick={onEdit}>
+              {t.clientDetailDrawer.editClient}
+            </button>
+          )}
+          {canManageClient && (
             <button
               className={styles.qaBtn}
               disabled={isArchived || isArchiving}
               onClick={() => setConfirmArchiveOpen(true)}
             >
               {isArchived ? t.clientDetailDrawer.archiveDone : isArchiving ? t.clientDetailDrawer.archiving : t.clientDetailDrawer.archiveIdle}
+            </button>
+          )}
+          {canManageClient && (
+            <button
+              className={`${styles.qaBtn} ${styles.dangerBtn}`}
+              disabled={isDeleting}
+              onClick={() => setConfirmDeleteOpen(true)}
+            >
+              {t.clientDetailDrawer.deleteIdle}
             </button>
           )}
         </div>
@@ -181,7 +251,6 @@ function ClientDetailContent({
             className={tab === activeTab ? `${styles.tab} ${styles.active}` : styles.tab}
             onClick={() => setActiveTab(tab)}
           >
-            {tab === "notes" && <LockIcon width={12} height={12} />}
             {t.clientDetailDrawer.tabs[tab]}
           </div>
         ))}
@@ -206,20 +275,18 @@ function ClientDetailContent({
           <div className={styles.empty}>{t.clientDetailDrawer.financeEmpty}</div>
         </div>
       )}
-      {activeTab === "files" && (
-        <div className={styles.body}>
-          <div className={styles.empty}>{t.clientDetailDrawer.filesEmpty}</div>
-        </div>
-      )}
-      {activeTab === "notes" && (
-        <div className={styles.body}>
-          <div className={styles.lockNote}>
-            <LockIcon width={16} height={16} />
-            {t.clientDetailDrawer.notesLockNote}
+      {activeTab === "files" &&
+        (filesTab ?? (
+          <div className={styles.body}>
+            <div className={styles.empty}>{t.clientDetailDrawer.filesEmpty}</div>
           </div>
-          <div className={styles.empty}>{t.clientDetailDrawer.notesEmpty}</div>
-        </div>
-      )}
+        ))}
+      {activeTab === "notes" &&
+        (notesTab ?? (
+          <div className={styles.body}>
+            <div className={styles.empty}>{t.clientDetailDrawer.notesEmpty}</div>
+          </div>
+        ))}
 
       <ConfirmationDialog
         open={confirmArchiveOpen}
@@ -230,6 +297,18 @@ function ClientDetailContent({
         isConfirming={isArchiving}
         onConfirm={handleConfirmArchive}
         onCancel={() => setConfirmArchiveOpen(false)}
+      />
+
+      <ConfirmationDialog
+        open={confirmDeleteOpen}
+        tone="danger"
+        title={t.clientDetailDrawer.deleteConfirmTitle}
+        message={interpolate(t.clientDetailDrawer.deleteConfirmMessageTemplate, { name: detail.name, days: trashRetentionDays })}
+        confirmLabel={t.clientDetailDrawer.deleteConfirmLabel}
+        cancelLabel={t.confirmationDialog.cancelLabel}
+        isConfirming={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmDeleteOpen(false)}
       />
     </>
   );
@@ -288,7 +367,11 @@ function OverviewTab({
 
       <div className={styles.stats}>
         <div className={styles.stat}>
-          <div className={styles.statLabel}>{t.clientDetailDrawer.statRevenueLabel}</div>
+          <div className={styles.statLabel}>
+            {detail.revenueScope === "PERSONAL"
+              ? t.clientDetailDrawer.statRevenueLabelPersonal
+              : t.clientDetailDrawer.statRevenueLabel}
+          </div>
           <div className={styles.statValue}>
             {detail.monthlyRevenue === null ? "—" : `₴${REVENUE_FORMAT.format(detail.monthlyRevenue)}`}
           </div>

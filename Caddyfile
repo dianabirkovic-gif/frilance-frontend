@@ -3,13 +3,44 @@
 {$SITE_ADDRESS:localhost} {
 	encode gzip zstd
 
+	# Baseline security headers for every response. The CSP matches what the SPA
+	# actually loads: its own bundle, Google Fonts + Fontshare stylesheets/fonts
+	# (index.html), inline style attributes (React), data:/blob: images, and
+	# same-origin API calls. pdfmake runs in-page and downloads via a blob: link
+	# (not a fetch or navigation), so it needs nothing extra. `connect-src`
+	# includes blob: defensively for object-URL reads. Creative videos are played
+	# from blob: object URLs (the file is fetched with the bearer token), so
+	# `media-src` must allow blob: — without it the player stays black. This was
+	# caught by serving the production build with these exact headers; the dev
+	# server sends no CSP, so no local run shows it.
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com; font-src 'self' data: https://fonts.gstatic.com https://cdn.fontshare.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+	}
+
 	# API docs are not served in prod; block them at the edge as well.
 	@blocked path /docs* /swagger-ui* /v3/api-docs*
 	handle @blocked {
 		respond 404
 	}
 
+	# Ad creatives (images up to 10 MB, videos up to 100 MB) need a larger body than
+	# the rest of the API. Declared before /api/* so it is the one that matches.
+	handle /api/v1/target/creatives* {
+		request_body {
+			max_size 101MB
+		}
+		reverse_proxy backend:8080
+	}
+
 	handle /api/* {
+		# A bit above the backend's 11MB multipart limit; reject bigger bodies at the edge.
+		request_body {
+			max_size 12MB
+		}
 		reverse_proxy backend:8080
 	}
 

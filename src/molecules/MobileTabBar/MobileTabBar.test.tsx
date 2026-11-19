@@ -67,7 +67,8 @@ describe("MobileTabBar", () => {
     // The content plan is the mobile route reached from here rather than from
     // a pinned tab — a real link, unlike the modules that aren't built yet.
     expect(screen.getByRole("link", { name: uk.nav.items.content })).toHaveAttribute("href", "/content");
-    expect(screen.getByText(uk.nav.items.target)).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("link", { name: uk.nav.items.target })).toHaveAttribute("href", "/target");
+    expect(screen.getByText(uk.nav.items.reports)).toHaveAttribute("aria-disabled", "true");
     // Фінанси is pinned after the FAB, so it is never in this menu.
     expect(screen.queryAllByRole("link", { name: uk.nav.items.finance })).toHaveLength(1);
   });

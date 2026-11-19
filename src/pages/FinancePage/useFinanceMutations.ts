@@ -26,6 +26,7 @@ function useFinanceMutation<TVariables, TResult>(mutationFn: (variables: TVariab
     mutationFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["finance"] });
+      queryClient.invalidateQueries({ queryKey: ["my-salary"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard", "overview"] });
     },
   });

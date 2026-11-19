@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { nextPostStatus, POST_STATUS_ORDER, type Post, type UpdatePostPayload } from "../../api/contentPlan";
-import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon } from "../../atoms/icons/icons";
+import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, DownloadIcon, PlusIcon } from "../../atoms/icons/icons";
 import { useAuth } from "../../hooks/useAuth";
 import { useToday } from "../../hooks/useToday";
 import type { ContentPlanView } from "../../i18n/dictionary";
@@ -9,6 +9,7 @@ import { useLocale } from "../../i18n/useLocale";
 import { MonthRuler } from "../../molecules/MonthRuler/MonthRuler";
 import { ConfirmationDialog } from "../../organisms/ConfirmationDialog/ConfirmationDialog";
 import { ContentPlanBoard } from "../../organisms/ContentPlanBoard/ContentPlanBoard";
+import { ContentPlanExportDialog } from "../../organisms/ContentPlanExportDialog/ContentPlanExportDialog";
 import { ContentPlanCalendar } from "../../organisms/ContentPlanCalendar/ContentPlanCalendar";
 import { PostDrawer } from "../../organisms/PostDrawer/PostDrawer";
 import { usePageFab } from "../../templates/AppShell/PageFabContext";
@@ -62,6 +63,7 @@ export function ContentPlanPage() {
   const [drawerDate, setDrawerDate] = useState(() => toIsoDate(new Date()));
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [postPendingDeletion, setPostPendingDeletion] = useState<Post | null>(null);
+  const [isExportOpen, setIsExportOpen] = useState(false);
 
   const month = monthOfIso(anchor);
   const range = useMemo(() => rangeFor(view, anchor), [view, anchor]);
@@ -238,6 +240,13 @@ export function ContentPlanPage() {
           </select>
         </label>
 
+        {/* Open to anyone who can open the plan — READ included. Exporting
+            writes nothing; it reads what the member is already allowed to see. */}
+        <button type="button" className={styles.exportBtn} onClick={() => setIsExportOpen(true)}>
+          <DownloadIcon width={14} height={14} />
+          {t.contentPlanExport.button}
+        </button>
+
         {canEdit && (
           <button type="button" className={styles.newPostBtn} onClick={openCreateForRange}>
             <PlusIcon width={15} height={15} />
@@ -313,6 +322,15 @@ export function ContentPlanPage() {
           onClose={() => setIsDrawerOpen(false)}
         />
       )}
+
+      <ContentPlanExportDialog
+        open={isExportOpen}
+        clients={clients}
+        defaultClientId={selectedClientId}
+        defaultFrom={range.from}
+        defaultTo={range.to}
+        onClose={() => setIsExportOpen(false)}
+      />
 
       <ConfirmationDialog
         open={postPendingDeletion !== null}

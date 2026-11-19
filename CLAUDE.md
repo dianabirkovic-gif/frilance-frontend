@@ -17,7 +17,29 @@ alongside implementing it.
 ## Current state
 
 Implemented: login (FR-01), the Overview dashboard screen, Clients (FR-05),
-Team (FR-02/FR-03), the content plan (FR-08) and Фінанси (FR-09), end to end
+Team (FR-02/FR-03), the content plan (FR-08), Фінанси (FR-09) and the Таргет
+section, end to end. Таргет has four tabs under one page (`TargetPage` is only the
+shell; each tab owns its header and FAB): **Завдання** (three-column board),
+**Кампанії** (campaigns + the hand-entered daily stats drawer), **Аналітика**
+(period totals, campaign / platform comparison, daily spend) and **Креативи**
+(image and video uploads). Two UI rules matter: a ratio the server sends as `null`
+is a dash, never `0` (`utils/adMetrics.ts`), and creative files are fetched with
+the bearer token and shown from object URLs — a video is only pulled when the user
+presses «Відтворити», never on scroll. The Аналітика tab's «Звіт у PDF»
+(`AdReportDialog` → `utils/adReportPdf`) is built in the browser with pdfmake from the
+server's figures; it is for **one client**, and **money there is a number plus the word
+«грн», never ₴** — the PDF's embedded Roboto has no glyph for it and a missing glyph
+prints as a box and eats the characters after it (pinned by a test). Check a generated
+PDF by eye, not only by tests: that bug passed every unit test. The **CSV import**
+(`StatsImportDialog` → `utils/csvImport`) parses in the browser: `decodeCsvBytes` (Google
+Ads writes UTF-16), `parseCsv` (delimiter detected), `findTable` / `autoMap` (header row
+below title lines; headers matched in English and Ukrainian, ratio columns like
+«Cost / conv.» and «Conv. value» deliberately excluded) and `buildStatRows` (one row per
+date, lines of a date summed). It never drops or invents silently: unreadable rows are
+listed with a reason and left out *with their whole date*. **Deleting a client moves it to the trash**
+(`useDeleteClient`); the Clients page has an owner-only «Кошик» tab (`ClientTrashTable`,
+`useClientTrash`) to restore it or delete it for good. A restore refreshes every cache a client's data
+lives in (`clients`, `contentPlan`, `target`, `finance`, `dashboard`), not just the list
 against the real backend API. Every other sidebar/tab-bar nav item
 (`config/navItems/navItems.ts`) is a disabled placeholder with no route —
 do not wire a nav item to a route until the page behind it actually exists.
@@ -57,6 +79,30 @@ things about it are load-bearing and pinned by tests:
   `PENDING | PAID` and sends `overdue` as a derived flag, so
   `PaymentStatusBadge` swaps the label and `FinanceEntryDrawer`'s stepper has
   two buttons. Adding a third would be inventing a state nothing can write.
+
+`MySalaryPage` («Моя зп», `/my-salary`) shows the signed-in member's own payouts
+for one month. It asks for no member id — the server takes it from the token — and
+its nav item is `memberOnly` (hidden from OWNER/FREELANCER, shown to every invited
+member regardless of section grants). Like `useFinance`, `useMySalary` must not gain
+`placeholderData: keepPreviousData`. The register's payout form picks the recipient
+from `Finance.members`; that pick is what puts a row on someone's «Моя зп», and it
+is only ever sent for a `PAYOUT`. See `../freelance-all/new-requirements.md` #27.
+
+The content plan exports a client-facing PDF («Експорт у PDF»,
+`ContentPlanExportDialog` → `utils/contentPlanPdf/`). It is built entirely in the
+browser with `pdfmake`, imported dynamically on first use (it is ~1 MB with its
+Roboto, the only bundled font with Cyrillic — do not import it at module level). The
+document is a pure function of its input (`buildContentPlanPdf`) and deliberately
+omits rating and author, since it is addressed to the client; drafts are opt-in. It
+reads the plan fresh, not from the cache. See `../freelance-all/new-requirements.md` #29.
+
+The client card's «Файли» and «Нотатки» tabs (`ClientFilesTab`, `ClientNotesTab`) are
+built as elements by `ClientsPage` and passed to the drawer, like the content tab, so
+they fetch only when selected. Editing a client reuses `AddClientDrawer` with a
+`client` prop and is offered only when `ownsTenant` (the backend refuses anyone else);
+a member's revenue figure is labelled as their own via `revenueScope`. Downloads go
+through `apiRequestBlob` because a plain link cannot send the bearer token.
+See `../freelance-all/new-requirements.md` #30.
 
 The four stat cards count settled money only, and a delta of `null` renders as
 nothing rather than "+100%" — see `../freelance-all/new-requirements.md` #26b.

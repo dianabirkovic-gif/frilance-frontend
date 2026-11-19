@@ -55,6 +55,8 @@ export interface FinanceEntry {
    * than showing what looks like a stray date.
    */
   carriedOver: boolean;
+  /** The team member a payout is paid to — it is what puts the row on their «Моя зп». */
+  recipientUserId: string | null;
 }
 
 /** Mirrors FinanceResponse.FinanceSummaryDto — the four stat cards. */
@@ -86,6 +88,12 @@ export interface FinanceClient {
   name: string;
 }
 
+/** Mirrors FinanceResponse.FinanceMemberDto — the payout form's recipient picker. */
+export interface FinanceMember {
+  id: string;
+  name: string;
+}
+
 /** Mirrors FinanceResponse.FinanceDto on the backend exactly — keep in sync. */
 export interface Finance {
   /** `YYYY-MM`. */
@@ -94,6 +102,7 @@ export interface Finance {
   selectedClientId: string | null;
   selectedType: FinanceEntryType | null;
   clients: FinanceClient[];
+  members: FinanceMember[];
   summary: FinanceSummary;
   flow: FinanceFlowPoint[];
   entries: FinanceEntry[];
@@ -112,6 +121,8 @@ export interface CreateFinanceEntryPayload {
   paymentMethod: PaymentMethod;
   dueDate: string | null;
   invoiceNumber: string | null;
+  /** Only meaningful for a PAYOUT; the backend refuses it on any other type. */
+  recipientUserId: string | null;
 }
 
 /** Mirrors UpdateFinanceEntryRequest — a full replacement, so `paymentStatus` is required. */
@@ -161,4 +172,43 @@ export function updatePaymentStatus(id: string, paymentStatus: PaymentStatus): P
 
 export function deleteFinanceEntry(id: string): Promise<void> {
   return apiRequest<void>(`/finance/entries/${id}`, { method: "DELETE" });
+}
+
+/** Mirrors FinanceResponse.MySalaryPaymentDto — one payout, with nothing about clients or invoices. */
+export interface MySalaryPayment {
+  id: string;
+  title: string;
+  description: string | null;
+  amount: number;
+  currency: string;
+  /** `YYYY-MM-DD`. */
+  entryDate: string;
+  dueDate: string | null;
+  paymentStatus: PaymentStatus;
+  overdue: boolean;
+  paymentMethod: PaymentMethod;
+}
+
+/** Mirrors FinanceResponse.MySalaryDto — the signed-in member's own pay for one month. */
+export interface MySalary {
+  /** `YYYY-MM`. */
+  month: string;
+  currency: string;
+  paidTotal: number;
+  pendingTotal: number;
+  payments: MySalaryPayment[];
+}
+
+/**
+ * Its own cache key, outside the `finance` prefix on purpose: the register's
+ * mutations invalidate that prefix, and `useCreateFinanceEntry` for a payout
+ * should refresh both — see `useFinanceMutation`.
+ */
+export function mySalaryQueryKey(month: string) {
+  return ["my-salary", month] as const;
+}
+
+/** The caller's own payouts. The server takes the member from the token — there is no id to pass. */
+export function getMySalary(month: string): Promise<MySalary> {
+  return apiRequest<MySalary>(`/finance/my-salary?month=${encodeURIComponent(month)}`);
 }

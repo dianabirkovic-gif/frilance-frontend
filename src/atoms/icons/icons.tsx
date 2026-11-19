@@ -143,6 +143,14 @@ export function TrashIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function DownloadIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M12 4v11M7 11l5 5 5-5M5 20h14" />
+    </Icon>
+  );
+}
+
 export function PlusIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props} strokeWidth={2.4}>
